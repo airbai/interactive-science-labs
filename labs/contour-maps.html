@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Contour Maps · Interactive Middle School Geography</title>
+<style>
+
+:root{
+  --ink:#0a0d12; --plate:rgba(10,13,18,.84);
+  --bone:#ece7dc; --dim:rgba(236,231,220,.62); --faint:rgba(236,231,220,.24); --line:rgba(236,231,220,.14);
+  --sig:#ff3b52; --amb:#ffb347; --cyan:#3ee0ff; --ok:#45e39a; --vio:#b58cff;
+  --disp:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --serif:"Songti SC","STSong","Noto Serif SC","SimSun",serif;
+  --num:"DIN Alternate","DIN Condensed","Bahnschrift","Arial Narrow",Arial,sans-serif;
+  --mono:"SF Mono",Menlo,Consolas,"Courier New",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#050608}
+#viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+#stage{width:1600px;height:900px;flex:none;position:relative;overflow:hidden;color:var(--bone);font-family:var(--disp);background:#07090d;user-select:none;-webkit-user-select:none}
+button{font-family:inherit;color:inherit}
+#cv{position:absolute;left:0;top:0;width:1600px;height:900px;display:block;touch-action:none}
+.pbar{position:absolute;left:0;top:0;height:3px;background:var(--sig);box-shadow:0 0 12px var(--sig);transition:width .5s;z-index:30}
+.topr{position:absolute;right:40px;top:24px;display:flex;gap:10px;z-index:30}
+.ib{height:36px;padding:0 14px;border:1px solid var(--line);background:rgba(10,13,18,.6);border-radius:4px;font:600 13px var(--mono);letter-spacing:.12em;color:var(--dim);cursor:pointer;backdrop-filter:blur(6px)}
+.ib:hover{color:var(--bone);border-color:var(--faint)}
+.navr{position:absolute;right:40px;bottom:26px;display:flex;align-items:center;gap:14px;z-index:30}
+.navr .pg{font:500 15px var(--mono);letter-spacing:.2em;color:var(--dim)}
+.navr .pg b{color:var(--bone)}
+.arr{width:50px;height:50px;border:1px solid var(--faint);background:rgba(10,13,18,.6);border-radius:50%;font-size:22px;cursor:pointer;display:grid;place-items:center}
+.arr:hover{border-color:var(--sig);color:var(--sig);box-shadow:0 0 18px rgba(255,59,82,.35)}
+.slide{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity .5s,visibility .5s;pointer-events:none;z-index:5}
+.slide.on{opacity:1;visibility:visible}
+.slide .ui{pointer-events:auto}
+.eyebrow{display:flex;align-items:center;gap:14px;font:600 14px var(--mono);letter-spacing:.28em;color:var(--dim)}
+.tagx{font:800 15px var(--disp);letter-spacing:.1em;color:#fff;background:var(--sig);padding:5px 10px 4px}
+.hud-tl{position:absolute;left:56px;top:38px}
+.hud-tl h2{font:800 46px/1.12 var(--disp);letter-spacing:.04em;margin-top:12px;text-shadow:0 2px 24px rgba(0,0,0,.8)}
+.hud-tl h2 em{font-style:normal;color:var(--sig);text-shadow:0 0 30px rgba(255,59,82,.5)}
+.hint{position:absolute;left:56px;bottom:32px;font:600 16px var(--disp);color:var(--dim);letter-spacing:.06em}
+.hint b{color:var(--sig)}
+/* Right panel */
+.side{position:absolute;right:40px;top:84px;bottom:96px;width:500px;padding:18px 22px;background:var(--plate);border:1px solid var(--line);backdrop-filter:blur(8px);display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.side .k{font:600 12px var(--mono);letter-spacing:.26em;color:var(--dim)}
+.side h3{font:800 24px/1.35 var(--disp)}
+.side h3 i{font-style:normal;color:var(--sig)}
+.rowx{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.mb{height:40px;padding:0 14px;border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:4px;font:700 16px var(--disp);color:var(--dim);cursor:pointer;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.mb:hover{color:var(--bone);border-color:var(--faint)}
+.mb.on{color:#fff;border-color:rgba(255,59,82,.75);background:rgba(255,59,82,.16);box-shadow:0 0 14px rgba(255,59,82,.2)}
+.mb.go{background:var(--sig);border-color:var(--sig);color:#fff;box-shadow:0 0 20px rgba(255,59,82,.35)}
+.mb.go:hover{background:#ff5a6e}
+.mb.dis{opacity:.35;pointer-events:none}
+.mb i.d{width:14px;height:14px;border-radius:50%;display:inline-block;border:1px solid rgba(255,255,255,.35)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.rg{height:46px;padding:0 10px;border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:10px;text-align:left}
+.rg:hover{border-color:var(--faint);background:rgba(255,255,255,.06)}
+.rg b{font:700 19px var(--num);color:var(--bone);min-width:84px}
+.rg span{font:600 13px var(--disp);color:var(--dim)}
+.rg i{width:12px;height:22px;border-radius:2px 2px 6px 6px;flex:none;border:1px solid rgba(255,255,255,.3)}
+.rg.a{border-color:var(--cyan);background:rgba(62,224,255,.12)}.rg.b{border-color:var(--amb);background:rgba(255,179,71,.12)}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.slot{height:66px;border:1.5px dashed var(--faint);border-radius:4px;padding:8px 12px;cursor:pointer;display:flex;flex-direction:column;justify-content:center}
+.slot small{font:600 12px var(--mono);letter-spacing:.2em;color:var(--dim)}
+.slot b{font:800 22px var(--num);margin-top:2px}
+.slot.on{border-style:solid}.slot.sa.on{border-color:var(--cyan);box-shadow:0 0 14px rgba(62,224,255,.25)}.slot.sb.on{border-color:var(--amb);box-shadow:0 0 14px rgba(255,179,71,.25)}
+.slot.sa b{color:var(--cyan)}.slot.sb b{color:var(--amb)}
+.chk{display:flex;align-items:center;gap:10px;font:600 16px var(--disp);color:var(--dim);cursor:pointer}
+.chk i{width:22px;height:22px;border:1.5px solid var(--faint);border-radius:4px;display:grid;place-items:center;font-style:normal;font-size:15px}
+.chk.on{color:var(--bone)}.chk.on i{background:#f04a98;border-color:#f04a98;color:#fff}
+/* Result card */
+.res{position:absolute;left:520px;top:250px;width:500px;padding:22px 26px 20px;background:var(--plate);border:1px solid var(--line);border-top:3px solid var(--sig);backdrop-filter:blur(8px)}
+.res .k{font:600 12px var(--mono);letter-spacing:.28em;color:var(--dim)}
+.res .ph{font:900 40px/1.25 var(--disp);margin:8px 0 12px}
+.res .ph i{font-style:normal;color:var(--sig)}
+.res .eq{font:700 22px/1.5 var(--num);color:var(--cyan);letter-spacing:.02em;min-height:33px}
+.res .ion{font:600 17px var(--num);color:var(--dim);margin-top:4px}
+.res .nt{font:600 16px/1.5 var(--disp);color:var(--amb);margin-top:8px;min-height:24px}
+.conds{display:flex;gap:10px;margin-top:14px}
+.conds div{flex:1;height:58px;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;font:800 20px var(--disp);color:rgba(236,231,220,.3);transition:all .3s}
+.conds div small{font:600 11px var(--mono);letter-spacing:.2em}
+.conds div.on{color:var(--ink);background:var(--ok);border-color:var(--ok);box-shadow:0 0 20px rgba(69,227,154,.35)}
+.conds div.x{color:rgba(255,59,82,.6);border-color:rgba(255,59,82,.3)}
+/* Indicator table */
+.tb{width:100%;border-collapse:collapse;font:600 15px var(--disp)}
+.tb th{font:600 11px var(--mono);letter-spacing:.14em;color:var(--dim);text-align:center;padding:5px 4px;border-bottom:1px solid var(--line)}
+.tb td{padding:6px 4px;text-align:center;border-bottom:1px solid rgba(236,231,220,.06);color:var(--bone);height:38px}
+.tb td:first-child{text-align:left;font:700 16px var(--num)}
+.tb td i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.tb tr.hl td{background:rgba(255,179,71,.08)}
+.rule{border-left:3px solid var(--sig);padding:8px 12px;background:rgba(255,255,255,.03);font:600 16px/1.6 var(--disp)}
+.rule b{color:var(--sig)}.rule u{text-decoration:none;color:#ff6fb5}.rule s{text-decoration:none;color:#6f8cff}
+.warn{border:1px solid rgba(255,179,71,.5);background:rgba(255,179,71,.1);padding:10px 14px;font:700 17px/1.5 var(--disp);color:var(--amb);opacity:0;transform:translateY(8px);transition:all .4s}
+.warn.on{opacity:1;transform:none}
+/* Microscopic / Purification */
+.eqbig{font:800 30px/1.35 var(--num);color:var(--cyan);min-height:44px}
+.lg{display:flex;flex-wrap:wrap;gap:6px 12px;font:600 14px var(--num);color:var(--dim)}
+.lg span{display:flex;align-items:center;gap:6px}.lg i{width:14px;height:14px;border-radius:50%}
+.checks{display:flex;flex-direction:column;gap:7px}
+.checks div{display:flex;align-items:center;gap:12px;padding:9px 12px;border:1px solid var(--line);font:700 17px var(--disp);color:rgba(236,231,220,.35);transition:all .3s}
+.checks div b{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:15px;background:rgba(255,255,255,.06);flex:none}
+.checks div small{font:600 14px var(--disp);color:var(--dim);margin-left:auto;text-align:right}
+.checks div.y{color:var(--bone);border-color:rgba(69,227,154,.5)}.checks div.y b{background:var(--ok);color:var(--ink)}
+.checks div.n{color:var(--bone);border-color:rgba(255,59,82,.6)}.checks div.n b{background:var(--sig);color:#fff}
+.verd{font:900 30px var(--disp);min-height:40px}
+.verd.y{color:var(--ok)}.verd.n{color:var(--sig)}
+.qnum{display:flex;gap:6px}
+.lv{width:46px;height:40px;border:1px solid var(--line);background:rgba(255,255,255,.03);font:700 17px var(--num);cursor:pointer;color:var(--dim)}
+.lv.on{border-color:var(--bone);color:var(--bone)}
+.lv.ok{background:var(--ok);border-color:var(--ok);color:var(--ink)}
+.lv.bad{background:var(--sig);border-color:var(--sig);color:#fff}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:8px 14px;border:1.5px solid var(--faint);font:700 17px var(--disp);cursor:pointer;background:rgba(255,255,255,.03)}
+.chip.on{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 14px rgba(62,224,255,.3)}
+.chip.used{opacity:.35}
+.opt{height:56px;font-size:19px;justify-content:flex-start}
+.opt.ok{background:var(--ok);border-color:var(--ok);color:var(--ink)}
+.opt.bad{background:rgba(255,59,82,.25);border-color:var(--sig);color:#fff}
+.score{font:700 15px var(--mono);letter-spacing:.2em;color:var(--dim)}
+.score b{font:700 44px var(--num);color:var(--ok);letter-spacing:0;margin-left:8px}
+.verdict{position:absolute;left:520px;top:400px;transform:translate(-50%,-50%) scale(1.6);opacity:0;pointer-events:none;transition:all .4s cubic-bezier(.2,1.5,.4,1);text-align:center;z-index:9}
+.verdict.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.verdict .w{font:900 110px/1 var(--num);letter-spacing:.08em;color:var(--ok);text-shadow:0 0 50px rgba(69,227,154,.6)}
+.verdict.bad .w{color:var(--sig);text-shadow:0 0 50px rgba(255,59,82,.6)}
+.verdict .s{font:700 24px var(--disp);letter-spacing:.2em;margin-top:6px;text-shadow:0 1px 10px #000}
+.debrief{position:absolute;left:150px;top:230px;width:760px;padding:34px 40px;background:var(--plate);border:1px solid var(--line);border-top:3px solid var(--ok);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transform:translateY(20px);transition:all .5s;z-index:8;text-align:center}
+.debrief.on{opacity:1;transform:none;pointer-events:auto}
+.debrief .g{font:900 150px/1 var(--num);color:var(--ok);text-shadow:0 0 50px rgba(69,227,154,.5)}
+.debrief .t{font:800 30px var(--disp);margin-top:10px}
+/* title */
+.t-wrap{position:absolute;left:80px;top:140px;width:820px}
+.t-word{font:900 200px/1 var(--serif);letter-spacing:.04em;white-space:nowrap;margin:18px 0 18px -8px;background:linear-gradient(180deg,#fff 0%,#e9e2d2 60%,#b9b09d 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 6px 40px rgba(0,0,0,.7))}
+.t-word span{background:linear-gradient(180deg,#ffd0d6,#ff3b52 60%,#c4122a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 30px rgba(255,59,82,.6))}
+.t-sub{font:800 44px var(--disp);letter-spacing:.2em;margin-bottom:24px}
+.t-prem{position:relative;padding-top:18px;border-top:1px solid var(--line);font:500 24px/1.6 var(--disp);color:rgba(236,231,220,.92);letter-spacing:.04em;max-width:640px}
+.t-prem::before{content:"";position:absolute;left:0;top:-2px;width:90px;height:3px;background:var(--sig)}
+.t-act{display:flex;gap:14px;margin-top:30px}
+.cta{height:58px;padding:0 28px;font:800 21px var(--disp);letter-spacing:.1em;border:0;background:var(--sig);color:#fff;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:0 0 30px rgba(255,59,82,.4)}
+.cta:hover{background:#ff5a6e}
+.cta.sec{background:rgba(10,13,18,.6);border:1px solid var(--faint);box-shadow:none}
+.cta.sec:hover{border-color:var(--bone)}
+/* summary */
+.tiles{position:absolute;left:56px;right:56px;top:170px;display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.tile{height:620px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(10,13,18,.2) 0,rgba(10,13,18,.2) 52%,rgba(10,13,18,.88) 52%);padding:22px 24px;display:flex;flex-direction:column;justify-content:flex-end;opacity:0;transform:translateY(24px);transition:all .6s}
+.slide.on .tile{opacity:1;transform:none}
+.tile .n{font:600 13px var(--mono);letter-spacing:.3em;color:var(--dim);margin-bottom:auto}
+.tile .h{font:900 32px/1.25 var(--disp);letter-spacing:.02em}
+.tile .h i{font-style:normal;color:var(--sig)}
+.tile .d{font:500 18px/1.6 var(--disp);color:var(--dim);margin-top:10px;min-height:86px}
+#notes{position:absolute;right:40px;top:70px;width:460px;padding:20px 22px;background:rgba(10,13,18,.96);border:1px solid var(--line);border-top:3px solid var(--cyan);font-size:17px;line-height:1.75;color:var(--bone);z-index:40;opacity:0;transform:translateY(-8px);pointer-events:none;transition:all .3s}
+#notes.show{opacity:1;transform:none;pointer-events:auto}
+#notes h4{font:600 12px var(--mono);letter-spacing:.3em;color:var(--cyan);margin-bottom:8px}
+
+.slide:not(.on) .ui{pointer-events:none!important}
+.xl{font:600 14px var(--disp);color:var(--dim);letter-spacing:.04em}
+.rng{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:linear-gradient(90deg,#2c7ab0,#60c08a 30%,#e0c060 60%,#c07040);outline:none;cursor:pointer}
+.rng::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;border:4px solid var(--sig);box-shadow:0 0 14px rgba(255,59,82,.5)}
+.rng::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:4px solid var(--sig)}
+.sl{display:flex;align-items:center;gap:12px}
+.rv{font:800 24px var(--num);min-width:92px;text-align:right}
+.desc{font:600 16px/1.7 var(--disp);color:var(--dim)}
+.desc b{color:var(--bone)}.desc .g{color:var(--ok)}.desc em{font-style:normal;color:var(--amb)}
+.rd{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font:600 15px var(--disp);color:var(--dim)}
+.rd b{font:800 21px var(--disp);color:var(--bone)}.rd b.g{color:var(--ok)}.rd b.r{color:#ff6b81}.rd b.c{color:var(--cyan)}
+.big{font:900 30px/1.25 var(--disp);color:var(--bone)}
+.big em{font-style:normal;color:var(--amb)}
+.th{width:456px;height:190px;border:1px solid var(--line);background:#070a0e;display:block}
+.qx{font:600 16px/1.6 var(--disp);color:var(--amb);min-height:52px;opacity:0;transition:opacity .4s}
+.qx.on{opacity:1}
+.legend{display:flex;height:16px;border:1px solid var(--line)}
+.legend i{flex:1}
+.lgn{display:flex;justify-content:space-between;font:600 12px var(--num);color:var(--dim);margin-top:3px}
+.ttab{display:grid;grid-template-columns:64px 1fr 1fr;font:600 14px/1.5 var(--disp);color:var(--dim);border-top:1px solid var(--line)}
+.ttab div{padding:5px 6px;border-bottom:1px solid var(--line);cursor:pointer}
+.ttab div.h{color:var(--bone);font-weight:800}
+.ttab div.on{color:#fff;background:rgba(255,179,71,.14)}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+<canvas id="cv"></canvas>
+<div class="pbar" id="pbar"></div>
+<div class="topr"><button class="ib" id="sndBtn">Sound ON</button><button class="ib" onclick="$('notes').classList.toggle('show')">Teacher notes</button><button class="ib" onclick="toggleFS()">Fullscreen ⛶</button></div>
+<div id="notes"><h4>TEACHER NOTE</h4><div id="notesTxt"></div></div>
+
+<section class="slide" data-name="Cover">
+  <div class="t-wrap ui">
+    <div class="eyebrow"><span class="tagx">Middle School Geography</span><span>Grade 7 · Geography</span></div>
+    <div class="t-word">Contour <span>Lines</span></div>
+    <div class="t-sub">Reading Topographic Maps</div>
+    <div class="t-prem">Peak · Ridge · Valley · Saddle · Cliff · Profile · Five Landforms<br>Flood a small hill and watch contour lines appear.</div>
+    <div class="t-act"><button class="cta" onclick="go(1)">Start ▶</button><button class="cta sec" onclick="go(2)">Terrain Features</button><button class="cta sec" onclick="go(6)">Quiz</button></div>
+  </div>
+</section>
+
+<section class="slide" data-name="How Contour Lines Work">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">01</span><span>CONTOUR</span></div><h2>Small Hill <em>Flood</em>: How Contour Lines Form</h2></div>
+  <div class="hint">Drag the <b>water level</b>, or tap “Flood” for an auto demo · then tap “Top view” to flatten the 3D hill into a map</div>
+  <div class="side ui">
+    <div class="k">WATER LEVEL · Water surface = same elevation</div>
+    <div class="sl"><span class="xl">water level</span><input type="range" class="rng" id="p1W" min="0" max="1350" step="10" value="0"><span class="rv" id="p1Wv">0 m</span></div>
+    <div class="rowx"><button class="mb go" id="p1Go">Flood ▶</button><button class="mb" id="p1Clr">Drain and Retry</button><button class="mb" id="p1V">Top view ⤓</button></div>
+    <div class="rd"><span>Current water level</span><b class="c" id="p1H">0 m</b><span>Contours drawn</span><b class="g" id="p1N">0 lines</b><span>Contour interval</span><b>100 m</b></div>
+    <div class="desc" id="p1D">Every rise of <b>100 m</b>, the line where the water meets the slope is one <b>contour line</b>. Project these lines straight down onto a flat plane to get a <em>contour map</em>. </div>
+    <div class="rowx"><div class="chk" id="p1All"><i>✓</i>Show all contour lines</div></div>
+    <div class="rule"><b>contour line</b>: a line joining points of equal elevation on a map<br>On the same line, elevation is <b>equal</b>; contour lines are usually <b>closed</b>; the height difference between neighboring lines is the <b>Contour interval</b></div>
+  </div>
+</section>
+
+<section class="slide" data-name="Terrain Features">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">02</span><span>LANDFORMS</span></div><h2>Five <em>Terrain Features</em></h2></div>
+  <div class="hint">Tap a button on the right, or tap the map directly · Hover over the map to see <b>elevation</b></div>
+  <div class="side ui">
+    <div class="k">PART · Choose a terrain feature</div>
+    <div class="rowx" id="p2B"><button class="mb" data-k="top">Peak</button><button class="mb" data-k="ridge">Ridge</button><button class="mb" data-k="valley">Valley</button><button class="mb" data-k="saddle">Saddle</button><button class="mb" data-k="cliff">Cliff</button></div>
+    <canvas class="th" id="p2Th" width="912" height="380"></canvas>
+    <div class="big" id="p2T">Tap a terrain feature</div>
+    <div class="desc" id="p2D" style="min-height:82px">Peak, ridge, valley, saddle and cliff can all be recognized from the <b>shape</b> of the contour lines.</div>
+    <div class="rd"><span>Elevation at cursor</span><b id="p2E">—</b></div>
+    <div class="rule"><b>Ridge</b>: contour lines bulge toward <b>lower ground</b> (bulging low means high)<br><b>Valley</b>: contour lines bulge toward <b>higher ground</b> (bulging high means low)</div>
+  </div>
+</section>
+
+<section class="slide" data-name="Slope and Profile">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">03</span><span>PROFILE</span></div><h2>Sparse = Gentle, Dense = Steep ·  <em>Terrain Profile</em></h2></div>
+  <div class="hint">Drag points  <b>A</b>, <b>B</b> on the map and the AB profile is drawn live below</div>
+  <div class="side ui">
+    <div class="k">PROFILE · Profile A → B</div>
+    <div class="rowx" id="p3P"><button class="mb on" data-p="0">Across two peaks</button><button class="mb" data-p="1">Steep vs. gentle slope</button><button class="mb" data-p="2">Over the cliff</button><button class="mb" data-p="3">Across the valley</button></div>
+    <div class="rd"><span>A point elevation</span><b id="p3A"></b><span>B point elevation</span><b id="p3B"></b><span>Relative height</span><b class="g" id="p3R"></b><span>A and B: line of sight</span><b id="p3S"></b></div>
+    <div class="desc" id="p3D" style="min-height:80px"></div>
+    <div class="rule">Contour lines that are <b>dense</b> mean a slope that is <b>steep</b>; <b>sparse</b> mean a slope that is <b>gentle</b><br>Profile: read the elevation where AB crosses each contour line and join the points into a curve<br><b>Relative height</b> = the difference in elevation between the two places</div>
+  </div>
+</section>
+
+<section class="slide" data-name="Rivers and Site Choice">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">04</span><span>RIVERS</span></div><h2>Water Flows into the <em>Valley</em> · Choosing Sites</h2></div>
+  <div class="hint">Tap anywhere on the map to drop a raindrop · or tap “Next Rain” · then try three <b>site tasks</b></div>
+  <div class="side ui">
+    <div class="k">RAIN · Rain runs downhill along the steepest direction</div>
+    <div class="rowx"><button class="mb go" id="p4R">Next Rain ☔</button><button class="mb" id="p4C">Clear</button><div class="chk on" id="p4Rv" style="margin-left:10px"><i>✓</i>Mark rivers</div></div>
+    <div class="desc" id="p4D">Rain splits to both sides at the <b>Ridge</b> and flows apart (the <em>watershed</em>), and gathers in the <b>Valley</b> to form a river.</div>
+    <div class="k" style="margin-top:6px">TASK · Site tasks (tap ① ② ③)</div>
+    <div class="rowx" id="p4T"><button class="mb on" data-t="0">Build a Dam</button><button class="mb" data-t="1">Hiking Route</button><button class="mb" data-t="2">Climbing Spot</button></div>
+    <div class="desc" id="p4Q" style="min-height:96px"></div>
+    <div class="rule">Rivers form in <b>Valley</b>, not on ridges<br>Dam: built in the valley <b>at the narrow exit</b>  · Hiking: pick the slope where contour lines are <b>sparse</b> (a gentle slope)</div>
+  </div>
+</section>
+
+<section class="slide" data-name="Five Basic Landforms">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">05</span><span>RELIEF</span></div><h2>Hypsometric Tints ·  <em>Five Basic Landforms</em></h2></div>
+  <div class="hint">Tap a landform on the right · switch 3D / flat to see the layered-color map</div>
+  <div class="side ui">
+    <div class="k">LANDFORM · Choose a landform</div>
+    <div class="ttab" id="p5T"><div class="h">Landform</div><div class="h">elevation</div><div class="h">Relief</div></div>
+    <div class="rowx"><button class="mb" id="p5V">Flat ⤓</button><div class="chk" id="p5L" style="margin-left:10px"><i>✓</i>contour line</div></div>
+    <div class="legend" id="p5Lg"></div><div class="lgn"><span>0</span><span>200</span><span>500</span><span>1000</span><span>2000</span><span>3000</span><span>m</span></div>
+    <div class="desc" id="p5D" style="min-height:80px">Layered-color map: <b>colors</b> show different <b>elevation</b>. Green is low, yellow is middle, brown is high.</div>
+    <div class="rule"><b>Plateau</b> high elevation, steep edges, <b>flat</b> · <b>Mountain</b> high elevation, <b>rugged peaks</b><br><b>Basin</b> high around, low in the middle ·  <b>Plain</b> low and flat ·  <b>Hills</b> low and rolling</div>
+  </div>
+</section>
+
+<section class="slide" data-name="Quiz">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">06</span><span>MISSION</span></div><h2>5 Exam <em>Map Questions</em></h2></div>
+  <div class="side ui">
+    <div class="rowx" style="justify-content:space-between"><div class="qnum" id="gLv"></div><div class="score">SCORE<b id="gSc">0</b></div></div>
+    <h3 id="gQ"></h3>
+    <div class="grid2" id="gOpts" style="grid-template-columns:1fr"></div>
+    <div class="qx" id="gX"></div>
+    <div class="rowx"><button class="mb go" id="gNext">Next →</button><button class="mb" id="gRe">Start Over</button></div>
+  </div>
+  <div class="verdict" id="gV"><div class="w">PERFECT</div><div class="s">+20</div></div>
+  <div class="debrief ui" id="gD"><div class="g" id="gG">S</div><div class="t" id="gT"></div><div class="rowx" style="justify-content:center;margin-top:24px"><button class="mb go" onclick="QZ.restart()">Try Again</button><button class="mb" onclick="go(7)">Summary →</button></div></div>
+</section>
+
+<section class="slide" data-name="Summary">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">07</span><span>DEBRIEF</span></div><h2>Contour Lines: <em>Four Takeaways</em> to Keep</h2></div>
+  <div class="tiles">
+    <div class="tile" style="transition-delay:.05s" onclick="go(1)"><div class="n">01 · Principle</div><div class="h">Same line, same height<br><i>Lines close up</i></div><div class="d">The line where the water meets the slope, projected onto a plane, is a contour line</div></div>
+    <div class="tile" style="transition-delay:.15s" onclick="go(2)"><div class="n">02 · Features</div><div class="h">Bulge low: ridge<br><i>bulge high: valley</i></div><div class="d">A closed loop high in the middle is a peak; between two peaks is a saddle; overlapping lines mean a cliff</div></div>
+    <div class="tile" style="transition-delay:.25s" onclick="go(3)"><div class="n">03 · Slope</div><div class="h">Sparse gentle, dense steep<br><i>profile shows relief</i></div><div class="d">Cliff relative height: (n−1)d ≤ H &lt; (n+1)d</div></div>
+    <div class="tile" style="transition-delay:.35s" onclick="go(4)"><div class="n">04 · Uses</div><div class="h">Rivers run in valleys<br><i>dams go at valley exits</i></div><div class="d">Ridges are watersheds; hike gentle slopes; climb cliffs</div></div>
+  </div>
+</section>
+
+<div class="navr"><span class="pg" id="pg"></span><button class="arr" onclick="go(cur-1)">←</button><button class="arr" onclick="go(cur+1)">→</button></div>
+</div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+/* ================= Sound ================= */
+const SFX=(()=>{let ctx=null,master=null,muted=false,nb=null,lastT=0;
+ try{muted=localStorage.getItem('contour_mute')==='1';}catch(e){}
+ function ac(){if(!ctx){const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;ctx=new AC();master=ctx.createGain();master.gain.value=.5;
+ const comp=ctx.createDynamicsCompressor();master.connect(comp);comp.connect(ctx.destination);
+ nb=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate);const d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;}
+ if(ctx.state==='suspended')ctx.resume();return ctx;}
+ function quiet(){return muted||(typeof cur!=='undefined'&&cur===0&&!window.__promo);}
+ function tone({f=440,f2=0,type='sine',t=0,dur=.2,vol=.2,att=.004}){if(quiet())return;const c=ac();if(!c)return;
+ const o=c.createOscillator(),g=c.createGain(),s=c.currentTime+t;o.type=type;o.frequency.setValueAtTime(f,s);if(f2)o.frequency.exponentialRampToValueAtTime(f2,s+dur);
+ g.gain.setValueAtTime(.0001,s);g.gain.linearRampToValueAtTime(vol,s+att);g.gain.exponentialRampToValueAtTime(.0001,s+dur);o.connect(g);g.connect(master);o.start(s);o.stop(s+dur+.05);}
+ function noise({t=0,dur=.2,vol=.1,f=2000,f2=0,type='bandpass',Q=1}){if(quiet())return;const c=ac();if(!c)return;
+ const src=c.createBufferSource(),fl=c.createBiquadFilter(),g=c.createGain(),s=c.currentTime+t;src.buffer=nb;src.loop=true;
+ fl.type=type;fl.Q.value=Q;fl.frequency.setValueAtTime(f,s);if(f2)fl.frequency.exponentialRampToValueAtTime(f2,s+dur);
+ g.gain.setValueAtTime(.0001,s);g.gain.linearRampToValueAtTime(vol,s+Math.min(.03,dur/3));g.gain.exponentialRampToValueAtTime(.0001,s+dur);
+ src.connect(fl);fl.connect(g);g.connect(master);src.start(s);src.stop(s+dur+.05);}
+ return {get muted(){return muted;},setMuted(m){muted=m;try{localStorage.setItem('contour_mute',m?'1':'0');}catch(e){}if(!m){ac();this.click();}},unlock(){ac();},
+ click(){tone({f:1100,f2:700,type:'triangle',dur:.05,vol:.06});},
+ tick(){const n=performance.now();if(n-lastT<45)return;lastT=n;tone({f:3000,type:'square',dur:.015,vol:.015});},
+ pick(){tone({f:2637,type:'sine',dur:.25,vol:.06});tone({f:3951,type:'sine',dur:.16,vol:.025});},
+ blip(){tone({f:1300,f2:1700,type:'sine',dur:.08,vol:.1});},
+ drip(){tone({f:1500,f2:520,type:'sine',dur:.09,vol:.13});tone({f:2400,f2:1200,type:'sine',t:.015,dur:.05,vol:.04});},
+ fizz(){noise({dur:1.1,vol:.07,f:6000,f2:3500,type:'highpass',Q:.7});noise({dur:.5,vol:.05,f:1800,Q:4});},
+ ppt(){noise({dur:.7,vol:.06,f:900,f2:300,type:'lowpass'});tone({f:330,f2:220,type:'triangle',dur:.35,vol:.08});tone({f:660,type:'sine',t:.05,dur:.5,vol:.04});},
+ color(){tone({f:880,f2:1320,type:'sine',dur:.35,vol:.07});tone({f:1760,type:'sine',t:.08,dur:.4,vol:.03});},
+ bond(i=0){const f=[523,659,784,988,1175][i%5];tone({f,type:'triangle',dur:.25,vol:.1});tone({f:f*2,type:'sine',dur:.2,vol:.03});},
+ paper(){noise({dur:.18,vol:.06,f:3000,Q:1.2});tone({f:1000,f2:1400,type:'sine',t:.12,dur:.15,vol:.06});},
+ hit(i=0){const f=[784,988,1175,1319][i%4];tone({f,type:'triangle',dur:.6,vol:.18});tone({f:f*2,type:'sine',dur:.4,vol:.06});},
+ wrong(){tone({f:220,f2:140,type:'sawtooth',dur:.28,vol:.07});tone({f:233,f2:150,type:'square',dur:.28,vol:.03});},
+ win(){[523,659,784,1047].forEach((f,i)=>tone({f,t:i*.08,type:'square',dur:.2,vol:.05}));tone({f:1568,t:.32,type:'triangle',dur:.9,vol:.12});tone({f:2093,t:.32,type:'sine',dur:.9,vol:.05});},
+ page(){noise({dur:.4,vol:.05,f:500,f2:2200,Q:.8});},
+ whoosh(){noise({dur:.55,vol:.14,f:300,f2:3000,Q:2.5});},
+  };})();
+document.addEventListener('pointerdown',()=>SFX.unlock(),{once:true});
+document.addEventListener('click',e=>{if(e.target.closest('button'))SFX.click();},true);
+/* ================= General drawing ================= */
+const NUMF='"DIN Alternate","Bahnschrift","Arial Narrow",Arial,sans-serif',FONT='"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif';
+const RED='#ff3b52',WARM='#ff5a4a',COLD='#3ea8ff',CYAN='#3ee0ff',AMB='#ffb347',OK='#45e39a',BONE='#ece7dc',HI='#4aa8ff',LO='#ff5a4a';
+const DEG=Math.PI/180;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t,ease=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const G2=(x,c,w)=>Math.exp(-(((x-c)/w)**2));
+let GEN=0;function later(ms,f){const k=GEN;setTimeout(()=>{if(k===GEN)f();},ms);}
+function rgba(c,a){return `rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a})`;}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
+function txt(g,s,x,y,o={}){g.save();g.font=o.f||`700 20px ${FONT}`;g.textAlign=o.al||'center';g.textBaseline='middle';g.globalAlpha=o.a??1;
+ if(o.st!==false){g.lineJoin='round';g.lineWidth=o.sw||5;g.strokeStyle='rgba(7,9,13,.88)';g.strokeText(s,x,y);}
+ g.fillStyle=o.c||BONE;if(o.glow){g.shadowColor=o.c||BONE;g.shadowBlur=o.glow;}g.fillText(s,x,y);g.restore();}
+function arw(g,x0,y0,x1,y1,o={}){const dx=x1-x0,dy=y1-y0,L=Math.hypot(dx,dy);if(L<3)return;const ux=dx/L,uy=dy/L,hs=Math.min(o.hs||16,L*.6),c=o.c||RED;
+ g.save();g.globalAlpha=o.a??1;g.strokeStyle=c;g.fillStyle=c;g.lineWidth=o.w||4;g.lineCap='round';if(o.glow!==0){g.shadowColor=c;g.shadowBlur=o.glow??10;}
+ if(o.dash)g.setLineDash(o.dash);g.beginPath();g.moveTo(x0,y0);g.lineTo(x1-ux*hs*.8,y1-uy*hs*.8);g.stroke();g.setLineDash([]);
+ g.beginPath();g.moveTo(x1,y1);g.lineTo(x1-ux*hs-uy*hs*.5,y1-uy*hs+ux*hs*.5);g.lineTo(x1-ux*hs+uy*hs*.5,y1-uy*hs-ux*hs*.5);g.closePath();g.fill();g.restore();
+ if(o.label)txt(g,o.label,o.lx??(x0+x1)/2,o.ly??((y0+y1)/2-20),{c:o.lc||c,f:o.f||`800 22px ${FONT}`,glow:8});}
+function badge(g,s,x,y,col,a=1,r=19){if(a<=.01)return;g.save();g.globalAlpha=a;g.shadowColor=col;g.shadowBlur=16;g.fillStyle=col;g.beginPath();g.arc(x,y,r,0,7);g.fill();g.shadowBlur=0;
+ g.lineWidth=2;g.strokeStyle='rgba(255,255,255,.85)';g.stroke();g.restore();txt(g,s,x,y+1,{c:'#fff',f:`900 ${Math.round(r*1.05)}px ${FONT}`,st:false,a});}
+/* Smooth polyline + flowing dashes + arrows */
+function flowPath(g,P,o){if(P.length<2)return;g.save();g.globalAlpha=o.a??1;g.lineCap='round';g.lineJoin='round';
+ const tr=()=>{g.beginPath();g.moveTo(P[0][0],P[0][1]);for(let i=1;i<P.length-1;i++){const mx=(P[i][0]+P[i+1][0])/2,my=(P[i][1]+P[i+1][1])/2;g.quadraticCurveTo(P[i][0],P[i][1],mx,my);}
+ const n=P.length-1;g.lineTo(P[n][0],P[n][1]);};
+ g.strokeStyle=o.c;g.globalAlpha=(o.a??1)*.28;g.lineWidth=(o.w||3)*2.6;g.shadowColor=o.c;g.shadowBlur=14;tr();g.stroke();
+ g.globalAlpha=o.a??1;g.shadowBlur=8;g.lineWidth=o.w||3;g.setLineDash(o.dash||[16,9]);g.lineDashOffset=-(o.t||0)*(o.sp||34);tr();g.stroke();g.setLineDash([]);g.restore();
+ const n=P.length-1,a=P[n],b=P[n-1],L=Math.hypot(a[0]-b[0],a[1]-b[1])||1,hs=(o.hs||13);
+ arw(g,a[0]-(a[0]-b[0])/L*hs*1.6,a[1]-(a[1]-b[1])/L*hs*1.6,a[0],a[1],{c:o.c,w:o.w||3,hs,glow:8,a:o.a??1});}
+
+
+/* ================= Contour lines: terrain engine ================= */
+const gs=(u,v,cx,cy,sx,sy)=>Math.exp(-((u-cx)**2/(2*sx*sx)+(v-cy)**2/(2*sy*sy)));
+function sgm(u,v,ax,ay,bx,by,w,ha,hb){const dx=bx-ax,dy=by-ay,L2=dx*dx+dy*dy,t=clamp(((u-ax)*dx+(v-ay)*dy)/L2,0,1),px=ax+t*dx,py=ay+t*dy;
+ return (ha+(hb-ha)*t)*Math.exp(-((u-px)**2+(v-py)**2)/(w*w));}
+/* Main terrain: two peaks on an island (Peak A, Peak B) + saddle + ridge + valley + cliff */
+function H1(u,v){let h=-80+400*gs(u,v,50,35,34,22)+880*gs(u,v,32,29,7.5,7.5)+330*gs(u,v,69,27,5,5);
+ h+=sgm(u,v,30,34,10,58,3.6,260,40)+sgm(u,v,33,36,34,62,3.2,240,40)+sgm(u,v,70,32,86,58,3.4,220,40);
+ h+=60*gs(u,v,57.5,27.5,4,2.4)+170*gs(u,v,50.5,27.5,5,2.6);
+ h-=sgm(u,v,51,35,53,70,3.2,130,80)+sgm(u,v,22,44,20,68,2.6,60,40);
+ h+=420*Math.exp(-(((u-70)/6.5)**2))*Math.exp(-(((v-22)/8)**2))/(1+Math.exp(-(v-17.5)/0.15));
+ return Math.max(0,h);}
+/* Five Basic Landforms */
+function H2(u,v){const st=(x,e,w)=>1/(1+Math.exp(-(x-e)/w));
+ let h=60+40*Math.sin(u*.2)*Math.cos(v*.17);
+ const pl=st(u,6,1.4)*(1-st(u,33,1.2))*st(v,8,1.4)*(1-st(v,52,1.4));h+=pl*(2550+14*Math.sin(u*.7)*Math.sin(v*.6)+10*Math.cos(u*1.3+v));
+ const r=Math.hypot(u-60,(v-44)*1.05);h+=1900*Math.exp(-(((r-12)/3.6)**2))*(0.75+0.25*Math.sin(Math.atan2(v-44,u-60)*5));
+  [[50,13,2400,3.4],[61,10,2700,3],[71,14,2200,3.2],[56,21,1700,2.8],[44,18,1500,2.6],[66,22,1500,2.4]].forEach(([x,y,a,s])=>h+=a*gs(u,v,x,y,s,s));
+ h+=(1-st(r,9.5,1))*250;
+  [[82,52,330],[88,60,300],[79,63,260],[92,50,280],[86,45,240],[93,64,220]].forEach(([x,y,a])=>h+=a*gs(u,v,x,y,2.6,2.6));
+ h*=1-st(u,97,0.8);
+ return Math.max(0,h);}
+const PAL1=[[0,[44,110,78]],[300,[96,150,80]],[600,[176,168,92]],[900,[184,124,70]],[1200,[150,92,70]],[1400,[214,196,182]]];
+const PAL2=[[0,[44,120,80]],[200,[110,160,84]],[500,[200,190,100]],[1000,[214,150,70]],[2000,[170,96,56]],[3000,[120,70,50]],[4200,[230,220,214]]];
+const SEA=[22,64,104];
+function palAt(P,h){if(h<=P[0][0])return P[0][1];for(let i=1;i<P.length;i++)if(h<=P[i][0]){const t=(h-P[i-1][0])/(P[i][0]-P[i-1][0]);return P[i-1][1].map((c,k)=>c+(P[i][1][k]-c)*t);}return P[P.length-1][1];}
+function Terrain(o){const T=Object.assign({N:200,M:140,U:100,V:70},o);const {N,M,U,V}=T,du=U/N,dv=V/M;
+ const h=new Float32Array((N+1)*(M+1));for(let j=0;j<=M;j++)for(let i=0;i<=N;i++)h[i+j*(N+1)]=T.H(i*du,j*dv);T.h=h;T.du=du;T.dv=dv;
+ T.node=(i,j)=>h[clamp(i,0,N)+clamp(j,0,M)*(N+1)];
+ T.at=(u,v)=>{const x=clamp(u/du,0,N-1e-6),y=clamp(v/dv,0,M-1e-6),i=x|0,j=y|0,fx=x-i,fy=y-j;
+ return lerp(lerp(T.node(i,j),T.node(i+1,j),fx),lerp(T.node(i,j+1),T.node(i+1,j+1),fx),fy);};
+ T.grad=(u,v)=>{const e=.35;return [(T.at(u+e,v)-T.at(u-e,v))/(2*e),(T.at(u,v+e)-T.at(u,v-e))/(2*e)];};
+ T.band=hh=>hh<=0.5?SEA:palAt(T.pal,T.bandMid?T.bandMid(hh):hh);
+  /* Isolines: marching squares */
+ T.segs={};T.levels.forEach(L=>{const S=[];for(let j=0;j<M;j++)for(let i=0;i<N;i++){const a=T.node(i,j),b=T.node(i+1,j),c=T.node(i+1,j+1),d=T.node(i,j+1);
+ const k=(a>L?8:0)|(b>L?4:0)|(c>L?2:0)|(d>L?1:0);if(!k||k===15)continue;const x=i*du,y=j*dv,
+ E=[[x+du*(L-a)/(b-a),y],[x+du,y+dv*(L-b)/(c-b)],[x+du*(L-d)/(c-d),y+dv],[x,y+dv*(L-a)/(d-a)]];
+ const P=(p,q)=>S.push(E[p][0],E[p][1],E[q][0],E[q][1]);const ctr=(a+b+c+d)/4>L;
+ switch(k){case 1:case 14:P(2,3);break;case 2:case 13:P(1,2);break;case 3:case 12:P(1,3);break;case 4:case 11:P(0,1);break;case 6:case 9:P(0,2);break;case 7:case 8:P(0,3);break;
+ case 5:ctr?(P(0,1),P(2,3)):(P(0,3),P(1,2));break;case 10:ctr?(P(0,3),P(1,2)):(P(0,1),P(2,3));break;}}
+ T.segs[L]=new Float32Array(S);});
+  /* Average elevation / lighting / contour lines crossing each cell */
+ T.cell=new Float32Array(N*M);T.shade=new Float32Array(N*M);T.cross=[];
+ for(let j=0;j<M;j++)for(let i=0;i<N;i++){const a=T.node(i,j),b=T.node(i+1,j),c=T.node(i+1,j+1),d=T.node(i,j+1),k=i+j*N;T.cell[k]=(a+b+c+d)/4;
+ const gx=((b+c)-(a+d))/(2*du),gy=((c+d)-(a+b))/(2*dv),e=T.relief||1/55,nx=-gx*e,ny=-gy*e,nl=Math.hypot(nx,ny,1);T.shade[k]=clamp(.78+.42*((-nx*.6-ny*.75+.5)/nl),.45,1.25);
+ const mn=Math.min(a,b,c,d),mx=Math.max(a,b,c,d),ac=T.cell[k];let cr=0;for(const L of T.levels)if(mn<L&&mx>=L&&Math.abs(ac-L)<=.32*(mx-mn)+1){cr=L;break;}T.cross[k]=cr;}
+  /* Flat map base color (layered tints + shading) */
+ T.mapImg=(()=>{const W=500,Hh=350,cv=document.createElement('canvas');cv.width=W;cv.height=Hh;const x=cv.getContext('2d'),im=x.createImageData(W,Hh);
+ for(let py=0;py<Hh;py++)for(let px=0;px<W;px++){const u=(px+.5)/W*U,v=(py+.5)/Hh*V,hh=T.at(u,v),gr=T.grad(u,v),sh=clamp(1+(-gr[0]*.6-gr[1]*.75)*(T.relief||1/55)*.5,.78,1.18),c=T.band(hh),o=(px+py*W)*4;
+ im.data[o]=c[0]*sh;im.data[o+1]=c[1]*sh;im.data[o+2]=c[2]*sh;im.data[o+3]=255;}x.putImageData(im,0,0);return cv;})();
+ return T;}
+
+/* ---- Flat map view ---- */
+function MapView(T,L,Tp,s){const M={T,L,Tp,s,W:T.U*s,H:T.V*s};M.X=u=>L+u*s;M.Y=v=>Tp+v*s;M.iu=X=>(X-L)/s;M.iv=Y=>(Y-Tp)/s;
+ M.inside=(X,Y)=>X>=L&&X<=L+M.W&&Y>=Tp&&Y<=Tp+M.H;
+ M.clip=g=>{g.beginPath();g.rect(L,Tp,M.W,M.H);g.clip();};
+ M.draw=(g,o={})=>{g.save();g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.globalAlpha=o.a??1;g.drawImage(T.mapImg,L,Tp,M.W,M.H);
+ if(o.dim){g.fillStyle=`rgba(7,9,13,${o.dim})`;g.fillRect(L,Tp,M.W,M.H);}
+ if(o.lines!==false)T.levels.forEach(Lv=>{if(o.maxL!=null&&Lv>o.maxL)return;const S=T.segs[Lv],idx=Lv%(T.idx||500)===0;g.beginPath();for(let k=0;k<S.length;k+=4){g.moveTo(L+S[k]*s,Tp+S[k+1]*s);g.lineTo(L+S[k+2]*s,Tp+S[k+3]*s);}
+ g.strokeStyle=o.hiL===Lv?'#fff':idx?'rgba(40,22,12,.85)':'rgba(40,22,12,.6)';g.lineWidth=(o.hiL===Lv?3:idx?2.2:1.3)*(o.lw||1);g.stroke();});
+ g.strokeStyle='rgba(236,231,220,.25)';g.lineWidth=1;g.strokeRect(L+.5,Tp+.5,M.W-1,M.H-1);g.restore();
+ if(o.labels)M.labels(g,o.labels);};
+  /* Label contour lines with numbers along guide lines */
+ M.labels=(g,guides)=>{guides.forEach(([a,b,lv])=>{(lv||T.levels).forEach(Lv=>{const S=T.segs[Lv];let best=null;
+ for(let k=0;k<S.length;k+=4){const p=segX(a,b,[S[k],S[k+1]],[S[k+2],S[k+3]]);if(p&&(!best||p.t<best.t))best={...p,ang:Math.atan2(S[k+3]-S[k+1],S[k+2]-S[k])};}
+ if(!best)return;let ang=best.ang;if(ang>Math.PI/2)ang-=Math.PI;if(ang<-Math.PI/2)ang+=Math.PI;
+ g.save();g.translate(M.X(best.x),M.Y(best.y));g.rotate(ang);txt(g,String(Lv),0,0,{f:`700 ${Math.round(clamp(s*1.35,10,15))}px ${NUMF}`,c:'#fff8ea',sw:4});g.restore();});});};
+ return M;}
+function segX(a,b,c,d){const r=[b[0]-a[0],b[1]-a[1]],q=[d[0]-c[0],d[1]-c[1]],den=r[0]*q[1]-r[1]*q[0];if(Math.abs(den)<1e-9)return null;
+ const t=((c[0]-a[0])*q[1]-(c[1]-a[1])*q[0])/den,w=((c[0]-a[0])*r[1]-(c[1]-a[1])*r[0])/den;if(t<0||t>1||w<0||w>1)return null;return {t,x:a[0]+t*r[0],y:a[1]+t*r[1]};}
+
+/* ---- 3D view: draw column by column (painter’s algorithm), contour lines baked into cells, with flooding ---- */
+function View3D(T,o){const R=Object.assign({cx:540,cy:520,k:9,hz:.24,tilt:.95,water:-1,rec:-1,allLines:false,hi:null},o);
+ let off=null,offK='';
+ R.X=u=>R.cx+(u-T.U/2)*R.k;R.Y=(v,h)=>R.cy+(v-T.V/2)*R.k*Math.cos(R.tilt)-h*R.hz*Math.sin(R.tilt);
+ R.render=()=>{const key=[R.cx,R.cy,R.k,R.hz,R.tilt.toFixed(3),R.water.toFixed(1),R.rec,R.allLines,RK,R.seaHide].join('|');if(off&&key===offK)return off;offK=key;
+ if(!off){off=document.createElement('canvas');}if(off.width!==1600*RK){off.width=1600*RK;off.height=900*RK;}
+ const x=off.getContext('2d');x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,off.width,off.height);x.setTransform(RK,0,0,RK,0,0);
+ const {N,M}=T,du=T.du,dv=T.dv,w=du*R.k+.9,ct=Math.cos(R.tilt),st=Math.sin(R.tilt),dz=dv*R.k*ct;
+ for(let j=0;j<M;j++){const v0=j*dv,Yb=R.cy+(v0-T.V/2)*R.k*ct;
+ for(let i=0;i<N;i++){const k=i+j*N,hc=T.cell[k],wet=hc<R.water,hh=hc,hf=j<M-1?T.cell[k+N]:-1;
+ let c;const cr=T.cross[k];
+ if(wet){const dpt=clamp((R.water-hc)/500,0,1),b=hc<=.5?[30,60,80]:(T.smooth?palAt(T.pal,hc):T.band(hc)),sh=T.shade[k];c=[lerp(b[0]*sh*.55,10,dpt*.6)+20,lerp(b[1]*sh*.6,40,dpt*.5)+50,lerp(b[2]*sh*.6,90,dpt*.4)+110];}
+ else if(hc<=.5){if(R.seaHide)continue;c=SEA;}else{const b=R.cols?R.cols(hc,i*du,v0):(T.smooth?palAt(T.pal,hc):T.band(hc)),sh=T.shade[k];c=[b[0]*sh,b[1]*sh,b[2]*sh];}
+ if(cr&&cr<=R.rec)c=wet?[170,215,200]:[255,236,170];else if(!wet&&cr&&R.allLines)c=[c[0]*.55,c[1]*.5,c[2]*.45];
+ if(R.water>0&&Math.abs(hc-R.water)<14)c=[150,245,255];
+ const X0=R.cx+(i*du-T.U/2)*R.k,Y0=Yb-hh*R.hz*st;x.fillStyle=`rgb(${c[0]|0},${c[1]|0},${c[2]|0})`;x.fillRect(X0,Y0,w,dz+.9);
+ if(hf>=0&&hf<hh){const Yf=Yb+dz-hf*R.hz*st;x.fillStyle=`rgb(${c[0]*.92|0},${c[1]*.92|0},${c[2]*.92|0})`;x.fillRect(X0,Y0+dz,w,Yf-Y0-dz+.9);}
+ else if(j===M-1){const Yf=Yb+dz;x.fillStyle=`rgb(${c[0]*.45|0},${c[1]*.45|0},${c[2]*.45|0})`;x.fillRect(X0,Y0+dz,w,Yf-Y0-dz+1);}}}
+ return off;};
+ R.draw=g=>{if(R.tank)R.frame(g,0);const o2=R.render();g.save();g.setTransform(1,0,0,1,0,0);g.drawImage(o2,0,0);g.restore();if(R.tank)R.frame(g,1);};
+ R.frame=(g,front)=>{const top=R.tank,P=(u,v,h)=>[R.X(u),R.Y(v,h)],U=T.U,V=T.V;g.save();g.strokeStyle='rgba(180,230,255,.32)';g.lineWidth=1.5;g.beginPath();
+ const L=(a,b)=>{g.moveTo(...a);g.lineTo(...b);};
+ if(!front){L(P(0,0,0),P(U,0,0));L(P(0,0,0),P(0,0,top));L(P(U,0,0),P(U,0,top));L(P(0,0,top),P(U,0,top));}
+ else{L(P(0,V,0),P(U,V,0));L(P(0,V,0),P(0,V,top));L(P(U,V,0),P(U,V,top));L(P(0,V,top),P(U,V,top));L(P(0,0,top),P(0,V,top));L(P(U,0,top),P(U,V,top));}
+ g.stroke();g.restore();};
+ R.pt=(u,v,h)=>[R.X(u),R.Y(v,h??T.at(u,v))];
+ return R;}
+
+/* ---- Profile ---- */
+function profile(T,A,B,n=240){const P=[];for(let k=0;k<=n;k++){const t=k/n,u=lerp(A[0],B[0],t),v=lerp(A[1],B[1],t);P.push([t,T.at(u,v)]);}return P;}
+function sight(P,eye=8){const a=P[0][1]+eye,b=P[P.length-1][1]+2;let blk=null,bd=0;for(const [t,h] of P){if(t<.02||t>.98)continue;const d=h-lerp(a,b,t);if(d>bd){bd=d;blk=[t,h];}}return blk;}
+/* ---- Raindrops run down the steepest direction ---- */
+function flow(T,u,v,max=900){const P=[[u,v]];for(let k=0;k<max;k++){const [gx,gy]=T.grad(u,v),m=Math.hypot(gx,gy);if(T.at(u,v)<=1||m<.4)break;u-=gx/m*.35;v-=gy/m*.35;if(u<0||u>T.U||v<0||v>T.V)break;P.push([u,v]);}return P;}
+
+</script>
+<script>
+/* ================= Pages ================= */
+const slides=[...document.querySelectorAll('.slide')];let cur=-1;
+const cv=$('cv'),g=cv.getContext('2d');let RK=1;
+const NOTES=[
+ 'Cover: contour maps are a hard topic in Grade 7 geography and a frequent exam question. This lesson breaks it down into: the principle (flooding), five terrain features, slope and profile, rivers and site choice, and layered colors with five basic landforms. Keys: ← → turn pages, F fullscreen, M mute.',
+ 'Principle: drag the water level or tap “Flood”. The line where the water meets the slope is a contour line, one every 100 m; after the water recedes the lines stay on the hill. Tap “Top view” to flatten the 3D hill into a map and see how contour lines go from 3D to flat. Stress: same line same height, equal contour intervals, contour lines close up.',
+ 'Terrain features: tap a button or tap the map directly. Peak (closed loop, high in the middle), ridge (bulges toward low ground), valley (bulges toward high ground), saddle (low spot between two peaks), cliff (several contour lines overlap). The small image on the right shows the 3D position. Move the cursor to read elevation.',
+ 'Slope and profile: drag A and B and the terrain profile is generated live below. The “Steep vs. gentle slope” preset compares the north slope (dense, steep) with the southwest ridge (sparse, gentle). Line of sight: checks whether terrain blocks the view between A and B; red means blocked.',
+ 'Rivers and site choice: tap the map to drop rain; it runs downhill along the steepest direction, gathers in valleys to form rivers, and ridges act as watersheds. Three site tasks: dams go at narrow valley exits; hikers pick gentle slopes with widely spaced contour lines; climbers pick cliffs.',
+ 'Five basic landforms: layered-color maps. Tap the table to switch landform and circle it on the 3D view; switch to “Flat” to see the layered-color map. Plateaus and mountains are both high, the difference is a flat top versus rugged peaks; plains and hills are both low, the difference is how much the land rolls.',
+ 'Quiz: 5 exam map questions on terrain features, rivers, slope, cliff relative height and line of sight. 20 points each; the map shows the explanation after you answer.',
+ 'Summary: four takeaways. Tap a card to return to its page.'];
+function fit(){const s=Math.min(innerWidth/1600,innerHeight/900);$('stage').style.transform=`scale(${s})`;const k=clamp(s*(window.devicePixelRatio||1),1,2);if(Math.abs(k-RK)>.05||cv.width<1600){RK=k;cv.width=1600*k;cv.height=900*k;bgC=null;}}
+addEventListener('resize',fit);
+function toggleFS(){if(!document.fullscreenElement)document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();else document.exitFullscreen();}
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;if(e.key==='ArrowRight'||e.key==='PageDown')go(cur+1);else if(e.key==='ArrowLeft'||e.key==='PageUp')go(cur-1);
+ else if(e.key==='f'||e.key==='F')toggleFS();else if(e.key==='m'||e.key==='M'){SFX.setMuted(!SFX.muted);sndUI();}});
+function sndUI(){const b=$('sndBtn');b.textContent=SFX.muted?'Sound OFF':'Sound ON';b.style.color=SFX.muted?'':'var(--sig)';}
+$('sndBtn').onclick=()=>{SFX.setMuted(!SFX.muted);sndUI();};sndUI();
+function el(tag,cls,html,parent){const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;if(parent)parent.appendChild(e);return e;}
+function radio(box,cb){const bs=[...box.querySelectorAll('.mb')];bs.forEach(b=>b.onclick=()=>{bs.forEach(x=>x.classList.toggle('on',x===b));cb(b);});}
+function chk(id,init,cb){const e=$(id);let v=init;e.classList.toggle('on',v);e.onclick=()=>{v=!v;e.classList.toggle('on',v);cb&&cb(v);SFX.blip();};return ()=>v;}
+let bgC=null;
+function bg(){if(!bgC){bgC=document.createElement('canvas');bgC.width=cv.width;bgC.height=cv.height;const b=bgC.getContext('2d');b.scale(RK,RK);
+ b.fillStyle='#07090d';b.fillRect(0,0,1600,900);const rg=b.createRadialGradient(540,480,0,540,480,900);rg.addColorStop(0,'rgba(40,70,60,.32)');rg.addColorStop(.6,'rgba(14,20,24,.2)');rg.addColorStop(1,'rgba(0,0,0,.6)');b.fillStyle=rg;b.fillRect(0,0,1600,900);
+ b.fillStyle='rgba(236,231,220,.05)';for(let x=40;x<1600;x+=40)for(let y=40;y<900;y+=40)b.fillRect(x-1,y-1,2,2);}
+ g.setTransform(1,0,0,1,0,0);g.drawImage(bgC,0,0);g.setTransform(RK,0,0,RK,0,0);}
+function stagePos(e){const r=cv.getBoundingClientRect();return [(e.clientX-r.left)/r.width*1600,(e.clientY-r.top)/r.height*900];}
+const PG=[];
+const tag=(g,s,X,Y,c,al='center',f)=>txt(g,s,X,Y,{f:f||`800 19px ${FONT}`,c,al,sw:5});
+const LV1=[];for(let L=100;L<=1300;L+=100)LV1.push(L);
+const T1=Terrain({H:H1,levels:LV1,pal:PAL1,idx:500,smooth:true,bandMid:h=>Math.floor(h/100)*100+50});
+const B2=[0,200,500,1000,2000,3000,9e9],MID2=[100,350,750,1500,2500,3500];
+const T2=Terrain({H:H2,levels:[200,500,1000,2000,3000],pal:PAL2,idx:1000,relief:1/260,bandMid:h=>{for(let i=1;i<B2.length;i++)if(h<B2[i])return MID2[i-1];return 3500;}});
+const MV1=MapView(T1,60,150,9.6);
+const elev=h=>h<=1?'Sea level (0 m)':`about ${Math.round(h/10)*10} m (${Math.floor(h/100)*100}–${Math.floor(h/100)*100+100} m range)`;
+/* Terrain feature coordinates (map units: 0–100 × 0–70, 1 unit = 100 m) */
+const FT={A:[31.5,33.8],B:[69.5,25],saddle:[58,27.6],ridge:[34,50],ridgeSW:[20,45],valley:[52.3,47],cliff:[70,17.5],ridgeSE:[78.5,45]};
+function mark(M,g,p,lab,c=AMB,o={}){const X=M.X(p[0]),Y=M.Y(p[1]);g.save();g.shadowColor=c;g.shadowBlur=14;g.fillStyle=c;g.beginPath();g.arc(X,Y,o.r||8,0,7);g.fill();g.shadowBlur=0;g.lineWidth=2.5;g.strokeStyle='#fff';g.stroke();g.restore();
+ if(lab)txt(g,lab,X+(o.dx??0),Y+(o.dy??-24),{f:o.f||`900 20px ${FONT}`,c:o.lc||'#fff',al:o.al||'center',sw:5,st:o.lc!=='#07090d'});}
+function pulse(M,g,p,t,c=AMB,r=26){const X=M.X(p[0]),Y=M.Y(p[1]),k=(t*1.2)%1;g.save();g.strokeStyle=c;g.globalAlpha=1-k;g.lineWidth=3;g.beginPath();g.arc(X,Y,r*(0.6+k),0,7);g.stroke();g.restore();}
+function polyUV(M,g,P,c,o={}){g.save();g.strokeStyle=c;g.lineWidth=o.w||3;g.lineCap='round';g.lineJoin='round';if(o.dash)g.setLineDash(o.dash);if(o.glow){g.shadowColor=c;g.shadowBlur=o.glow;}g.globalAlpha=o.a??1;
+ g.beginPath();P.forEach((p,i)=>i?g.lineTo(M.X(p[0]),M.Y(p[1])):g.moveTo(M.X(p[0]),M.Y(p[1])));g.stroke();g.restore();}
+const arwUV=(M,g,a,b,c,o={})=>arw(g,M.X(a[0]),M.Y(a[1]),M.X(b[0]),M.Y(b[1]),Object.assign({c,w:4,hs:14},o));
+function scaleBar(M,g,x,y){const w=10*M.s;g.save();g.fillStyle='rgba(7,9,13,.75)';rr(g,x-10,y-26,w+60,40,6);g.fill();g.fillStyle='#ece7dc';g.fillRect(x,y,w,4);g.fillRect(x,y-6,2,10);g.fillRect(x+w-2,y-6,2,10);g.restore();
+ txt(g,'0',x,y-14,{f:`600 13px ${NUMF}`});txt(g,'1 km',x+w,y-14,{f:`600 13px ${NUMF}`});txt(g,'Contour interval 100 m',x+w+8,y+2,{f:`600 12px ${FONT}`,al:'left',c:'rgba(236,231,220,.7)'});}
+function northArrow(g,x,y){g.save();g.fillStyle='#ece7dc';g.beginPath();g.moveTo(x,y-18);g.lineTo(x+8,y+8);g.lineTo(x,y+3);g.lineTo(x-8,y+8);g.closePath();g.fill();g.restore();txt(g,'N',x,y-30,{f:`900 16px ${NUMF}`});}
+/* River (main channel from releasing water at the valley head) */
+const RIVERS=[flow(T1,51.5,36.5),flow(T1,22.3,44.5),flow(T1,40.6,14.5),flow(T1,84,34)].filter(P=>P.length>8);
+const LABS1=[[[3,34],[31.5,33.8],[100,300,500,700,900,1100]],[[69.5,25],[97,25],[200,400,600,800]]];
+
+/* ---------- 1 Principle: Flooding ---------- */
+PG[1]=(()=>{const V=View3D(T1,{cx:540,cy:560,k:8.4,hz:.22,tilt:.95,seaHide:true});let water=0,rec=0,auto=null,tT=.95,tilt=.95;const all=chk('p1All',false);
+ const sl=$('p1W');
+ function setW(w,user){water=clamp(w,0,1350);sl.value=water;const L=Math.floor(water/100)*100;if(L>rec){rec=L;SFX.blip();}paint();}
+ function paint(){$('p1Wv').textContent=Math.round(water)+' m';$('p1H').textContent=Math.round(water)+' m';$('p1N').textContent=(rec/100|0)+' lines';
+    $('p1D').innerHTML=rec>=1300?'13 contour lines are all drawn. When the water recedes, the lines stay on the slope: <b>Elevation is equal along the same line</b>; the higher the hill, the smaller the closed loop. Tap “<em>Top view</em>” to see the flat map.':
+      `Every rise of <b>100 m</b>, the line where the water meets the slope is one <b>contour line</b>. Water level is now ${Math.round(water)} m, contour lines drawn: ${rec/100|0} total.`;}
+ sl.oninput=()=>{auto=null;setW(+sl.value,true);};
+  $('p1Go').onclick=()=>{auto={up:true};SFX.whoosh();};$('p1Clr').onclick=()=>{auto=null;rec=0;setW(0);};
+  $('p1V').onclick=()=>{tT=tT>.5?0:.95;$('p1V').textContent=tT>.5?'Top view ⤓':'3D ⤒';SFX.whoosh();};paint();
+ return {V,setW,fill(){$('p1Go').click();},setTilt(v){tT=v;$('p1V').textContent=tT>.5?'Top view ⤓':'3D ⤒';},get rec(){return rec;},set rec(v){rec=v;paint();},
+ update(dt){if(auto){if(auto.up){setW(water+dt*260);if(water>=1350)auto.up=false;}else{setW(water-dt*420);if(water<=0)auto=null;}}
+ tilt+=(tT-tilt)*(1-Math.exp(-dt*3.2));if(Math.abs(tilt-tT)<.002)tilt=tT;V.tilt=tilt;V.cy=lerp(486,560,tilt/.95);},
+ draw(g,t){V.water=water>2?Math.round(water/5)*5:-1;V.rec=rec;V.allLines=all();
+ if(tilt>.02)V.draw(g);const mf=clamp(1-tilt/.18,0,1);
+ if(mf>0){const M=MapView(T1,V.cx-50*V.k,V.cy-35*V.k,V.k);g.save();g.globalAlpha=mf;M.draw(g,{maxL:all()?null:rec,labels:LABS1});g.restore();}
+ if(tilt>.3&&water>2){tag(g,`water level ${Math.round(water)} m · Cyan line = where the water meets the slope`,540,P1T()+8,CYAN);}
+ if(tilt<.3)txt(g,'Top view: contour lines projected onto the plane',540,P1T(),{f:`800 20px ${FONT}`,c:AMB});}};})();
+const P1T=()=>140+14;
+
+/* ---------- 2 Terrain Features ---------- */
+const PARTS={
+ top:{n:'Peak',d:'contour line<b>closed</b>; the values are <em>high in the middle, low around the edges</em>. On the map, Peak A is about 1300 m and Peak B about 900 m.',p:FT.A},
+ ridge:{n:'Ridge',d:'Contour lines bulge toward <em>low ground</em> (bulging low means high). The ridge line is the dividing line between the slopes on either side: the <b>watershed</b>. ',p:FT.ridge},
+ valley:{n:'Valley',d:'Contour lines bulge toward <em>high ground</em> (bulging high means low). A valley collects water and often <b>has rivers</b>. ',p:FT.valley},
+ saddle:{n:'Saddle',d:'<b>Between two peaks</b> is a relatively low spot shaped like a horse saddle. Here two sets of closed contour lines sit “back to back.”',p:FT.saddle},
+ cliff:{n:'Cliff',d:'Several contour lines <em>overlap</em> and the slope is nearly vertical. Shown with a  <b>“comb” symbol</b>, good for climbing.',p:FT.cliff}};
+function drawPart(M,g,k,t,nolab){const P=PARTS[k];if(!P)return;const mk=(M,g,p,lab,c,o)=>mark(M,g,p,nolab?null:lab,c,o);
+ if(k==='top'){pulse(M,g,FT.A,t);pulse(M,g,FT.B,t+.5);mk(M,g,FT.A,'Peak A ▲ 1318 m');mk(M,g,FT.B,'Peak B ▲ 895 m');}
+ if(k==='ridge'){[[FT.ridge,[34,56]],[FT.ridgeSW,[15,51]],[FT.ridgeSE,[82,51]]].forEach(([a,b])=>arwUV(M,g,a,b,'#ff8a3d'));polyUV(M,g,[[32,38],[33.5,60]],'#ff8a3d',{dash:[10,7],w:3});polyUV(M,g,[[29,37],[12,57]],'#ff8a3d',{dash:[10,7],w:3});polyUV(M,g,[[71,32],[85,56]],'#ff8a3d',{dash:[10,7],w:3});
+ mk(M,g,FT.ridge,'Ridge: bulges toward low ground',undefined,{dy:58});}
+ if(k==='valley'){RIVERS.slice(0,2).forEach(R=>polyUV(M,g,R,'#4fc3ff',{w:4,glow:10}));arwUV(M,g,[52.6,54],[51.8,42],CYAN);arwUV(M,g,[21,58],[22.2,48],CYAN);mk(M,g,FT.valley,'Valley: bulges toward high ground',CYAN,{dx:12,al:'left',dy:0});}
+ if(k==='saddle'){arwUV(M,g,FT.saddle,[40,31.5],'#ff8a3d',{a:.9});arwUV(M,g,FT.saddle,[66,26],'#ff8a3d',{a:.9});mk(M,g,FT.saddle,'Saddle',AMB,{dy:34});mk(M,g,FT.A,'Peak A',RED,{r:6});mk(M,g,FT.B,'Peak B',RED,{r:6});}
+ if(k==='cliff'){const X0=M.X(63.5),X1=M.X(76.5),Y=M.Y(17.4);g.save();g.strokeStyle='#ff3b52';g.lineWidth=4;g.shadowColor=RED;g.shadowBlur=10;g.beginPath();g.moveTo(X0,Y);g.lineTo(X1,Y);g.stroke();
+ g.lineWidth=2.5;for(let x=X0+4;x<X1;x+=9){g.beginPath();g.moveTo(x,Y);g.lineTo(x,Y-10);g.stroke();}g.restore();txt(g,'Cliff: contour lines overlap',M.X(70),Y-30,{f:`900 20px ${FONT}`,sw:5});}}
+const TH=(()=>{const c=$('p2Th'),x=c.getContext('2d'),V=View3D(T1,{cx:228,cy:118,k:4.3,hz:.11,tilt:.95,allLines:true,seaHide:true});
+ return {V,draw(k,t){V.allLines=true;const o=V.render();x.setTransform(1,0,0,1,0,0);x.fillStyle='#070a0e';x.fillRect(0,0,912,380);x.drawImage(o,0,0,456*RK,190*RK,0,0,912,380);x.setTransform(2,0,0,2,0,0);
+ const P=PARTS[k];if(P){const p=V.pt(P.p[0],P.p[1]);x.save();x.fillStyle=AMB;x.shadowColor=AMB;x.shadowBlur=12;x.beginPath();x.arc(p[0],p[1]-4,5+1.5*Math.sin(t*5),0,7);x.fill();x.restore();
+ x.font=`800 14px ${FONT}`;x.textAlign='center';x.lineWidth=4;x.strokeStyle='#07090d';x.strokeText(P.n,p[0],p[1]-16);x.fillStyle='#fff';x.fillText(P.n,p[0],p[1]-16);}
+ x.font=`700 12px ${FONT}`;x.textAlign='left';x.fillStyle='rgba(236,231,220,.6)';x.fillText('3D sketch',10,18);}};})();
+PG[2]=(()=>{const M=MV1;let sel=null,hov=null;
+ function set(k){sel=k;[...$('p2B').children].forEach(b=>b.classList.toggle('on',b.dataset.k===k));const P=PARTS[k];$('p2T').innerHTML=P.n;$('p2D').innerHTML=P.d;SFX.pick();}
+  [...$('p2B').children].forEach(b=>b.onclick=()=>set(b.dataset.k));
+ const near=(p)=>{let best=null,bd=60;Object.entries(PARTS).forEach(([k,P])=>{const d=Math.hypot(p[0]-M.X(P.p[0]),p[1]-M.Y(P.p[1]));if(d<bd){bd=d;best=k;}});
+    [['top',FT.B],['ridge',FT.ridgeSW],['ridge',FT.ridgeSE]].forEach(([k,q])=>{const d=Math.hypot(p[0]-M.X(q[0]),p[1]-M.Y(q[1]));if(d<bd){bd=d;best=k;}});return best;};
+ return {set,update(){},draw(g,t){M.draw(g,{labels:LABS1});scaleBar(M,g,M.X(3),M.Y(66));northArrow(g,M.X(96),M.Y(7));
+ if(!sel)Object.entries(PARTS).forEach(([k,P])=>mark(M,g,P.p,P.n,'rgba(255,179,71,.9)',{r:6,f:`800 17px ${FONT}`}));
+ drawPart(M,g,sel,t);TH.draw(sel,t);
+ if(hov){const [X,Y]=hov;g.save();g.strokeStyle='#fff';g.lineWidth=1.5;g.beginPath();g.arc(X,Y,6,0,7);g.stroke();g.restore();}},
+ down(p){if(!M.inside(...p))return;const k=near(p);if(k){set(k);return true;}},
+ move(p){if(M.inside(...p)){hov=p;$('p2E').textContent=elev(T1.at(M.iu(p[0]),M.iv(p[1])));return !!near(p);}hov=null;$('p2E').textContent='—';return false;}};})();
+
+/* ---------- 3 Slope and Profile ---------- */
+const PRE3=[{A:[12,36],B:[88,26],d:'The profile shows two peaks and, between them, the <b>Saddle</b>. Peak A is higher, and Peak B has a cliff on its north side.'},
+ {A:[31.5,10],B:[33,63],d:'From the coast to the summit: on the north slope contour lines are <em>dense</em>, so the profile is steep; on the south along the ridge contour lines are <em>sparse</em>, gentle profile.'},
+ {A:[70,8],B:[70,32],d:'At the cliff the profile is almost <em>vertical</em>: several contour lines overlap and the elevation jumps by over 300 m.'},
+ {A:[38,48],B:[66,48],d:'Across the valley: the middle of the profile <b>dips down</b>, with ridges on both sides and the river at the bottom of the valley.'}];
+PG[3]=(()=>{const M=MapView(T1,56,150,6.6);let A=PRE3[0].A.slice(),B=PRE3[0].B.slice(),drag=null,hot=null,pi=0;
+ const CH={L:96,R:1004,T:652,B:812};
+ function paint(){const ha=T1.at(...A),hb=T1.at(...B),P=profile(T1,A,B),blk=sight(P);
+    $('p3A').textContent=Math.round(ha)+' m';$('p3B').textContent=Math.round(hb)+' m';$('p3R').textContent=Math.round(Math.abs(ha-hb))+' m';
+    $('p3S').innerHTML=blk?'<span style="color:#ff6b81">No, terrain blocks the view</span>':'<span style="color:var(--ok)">Yes, visible</span>';$('p3D').innerHTML=pi>=0?PRE3[pi].d:'Drag A and B yourself: contour lines that are <em>dense</em> mean a profile that is <em>steep</em>. ';}
+ radio($('p3P'),b=>{pi=+b.dataset.p;A=PRE3[pi].A.slice();B=PRE3[pi].B.slice();paint();SFX.whoosh();});paint();
+ return {M,set(i){$('p3P').children[i].click();},setAB(a,b){A=a;B=b;pi=-1;[...$('p3P').children].forEach(x=>x.classList.remove('on'));paint();},update(){},
+ draw(g,t){M.draw(g,{labels:LABS1});scaleBar(M,g,M.X(3),M.Y(66));northArrow(g,M.X(96),M.Y(8));
+ const P=profile(T1,A,B),blk=sight(P);
+      /* Contour crossings */
+ g.save();g.strokeStyle='#fff';g.lineWidth=3;g.shadowColor='#000';g.shadowBlur=6;g.beginPath();g.moveTo(M.X(A[0]),M.Y(A[1]));g.lineTo(M.X(B[0]),M.Y(B[1]));g.stroke();g.restore();
+ let prev=P[0][1];const xs=[];P.forEach(([tt,h])=>{T1.levels.forEach(L=>{if((prev<L&&h>=L)||(prev>=L&&h<L))xs.push([tt,L]);});prev=h;});
+ xs.forEach(([tt])=>{const u=lerp(A[0],B[0],tt),v=lerp(A[1],B[1],tt);g.fillStyle=AMB;g.beginPath();g.arc(M.X(u),M.Y(v),3.5,0,7);g.fill();});
+      [['A',A],['B',B]].forEach(([n,q])=>{const on=hot===n||drag===n;g.save();g.fillStyle=n==='A'?RED:CYAN;g.shadowColor=g.fillStyle;g.shadowBlur=on?22:12;g.beginPath();g.arc(M.X(q[0]),M.Y(q[1]),on?12:10,0,7);g.fill();g.restore();
+ txt(g,n,M.X(q[0]),M.Y(q[1])+1,{f:`900 15px ${NUMF}`,c:'#fff',st:false});});
+      /* Right legend */
+ const lx=746;txt(g,'Legend · Elevation (m)',lx,170,{al:'left',f:`800 16px ${FONT}`});
+      [0,200,400,600,800,1000,1200].forEach((h,i)=>{const c=T1.band(h+50);g.fillStyle=`rgb(${c.map(x=>x|0)})`;g.fillRect(lx,190+i*26,38,22);txt(g,`${h}–${h+200}`,lx+48,201+i*26,{al:'left',f:`600 14px ${NUMF}`,c:'rgba(236,231,220,.8)'});});
+ txt(g,'A→B Horizontal distance',lx,400,{al:'left',f:`700 15px ${FONT}`,c:'rgba(236,231,220,.6)'});txt(g,(Math.hypot(B[0]-A[0],B[1]-A[1])/10).toFixed(1)+' km',lx,428,{al:'left',f:`900 26px ${NUMF}`});
+ txt(g,'Crossings (contour lines crossed)',lx,470,{al:'left',f:`700 15px ${FONT}`,c:'rgba(236,231,220,.6)'});txt(g,xs.length+' times',lx,498,{al:'left',f:`900 26px ${NUMF}`,c:AMB});
+      /* Profile */
+ g.save();g.fillStyle='rgba(8,11,16,.75)';rr(g,56,632,968,190,10);g.fill();g.strokeStyle='rgba(236,231,220,.12)';g.stroke();g.restore();
+ const X=tt=>lerp(CH.L,CH.R,tt),Y=h=>lerp(CH.B,CH.T,h/1400);
+      [0,500,1000].forEach(h=>{g.strokeStyle='rgba(236,231,220,.12)';g.lineWidth=1;g.beginPath();g.moveTo(CH.L,Y(h));g.lineTo(CH.R,Y(h));g.stroke();txt(g,h+'',CH.L-8,Y(h),{al:'right',f:`600 12px ${NUMF}`,c:'rgba(236,231,220,.55)',sw:3});});
+ txt(g,'Elevation/m',CH.L-6,CH.T-8,{al:'right',f:`600 12px ${FONT}`,c:'rgba(236,231,220,.55)'});
+ for(let k=0;k<P.length-1;k++){const c=T1.band(P[k][1]);g.fillStyle=`rgb(${c.map(x=>x|0)})`;const x0=X(P[k][0]),x1=X(P[k+1][0]);g.fillRect(x0,Y(P[k][1]),x1-x0+.8,CH.B-Y(P[k][1]));}
+ g.save();g.strokeStyle='#fff';g.lineWidth=2.5;g.beginPath();P.forEach(([tt,h],k)=>k?g.lineTo(X(tt),Y(h)):g.moveTo(X(tt),Y(h)));g.stroke();g.restore();
+ xs.forEach(([tt,L])=>{g.fillStyle=AMB;g.beginPath();g.arc(X(tt),Y(L),3,0,7);g.fill();});
+ const a=P[0][1]+8,b=P[P.length-1][1]+2;g.save();g.setLineDash([8,6]);g.strokeStyle=blk?'#ff6b81':OK;g.lineWidth=2.5;g.beginPath();g.moveTo(X(0),Y(a));g.lineTo(X(1),Y(b));g.stroke();g.restore();
+ if(blk){g.save();g.fillStyle='#ff3b52';g.beginPath();g.arc(X(blk[0]),Y(blk[1]),7,0,7);g.fill();g.restore();tag(g,'View blocked',X(blk[0]),Y(blk[1])-18,'#ff6b81');}
+ txt(g,'A',X(0),CH.B+2-10,{f:`900 16px ${NUMF}`,c:'#ff6b81'});txt(g,'B',X(1)+12,CH.B-10,{f:`900 16px ${NUMF}`,c:CYAN});
+ txt(g,'Terrain profile (vertical scale exaggerated)',CH.R,CH.T-8,{al:'right',f:`700 13px ${FONT}`,c:'rgba(236,231,220,.5)'});},
+ down(p){for(const [n,q] of [['A',A],['B',B]])if(Math.hypot(p[0]-M.X(q[0]),p[1]-M.Y(q[1]))<22){drag=n;SFX.pick();return true;}},
+ move(p){if(drag){const u=clamp(M.iu(p[0]),1,99),v=clamp(M.iv(p[1]),1,69),q=drag==='A'?A:B;q[0]=u;q[1]=v;if(pi>=0){pi=-1;[...$('p3P').children].forEach(x=>x.classList.remove('on'));}paint();return true;}
+ hot=[['A',A],['B',B]].find(([n,q])=>Math.hypot(p[0]-M.X(q[0]),p[1]-M.Y(q[1]))<22)?.[0]||null;return !!hot;},up(){drag=null;}};})();
+
+/* ---------- 4 Rivers and Site Choice ---------- */
+const TASK=[
+ {q:'Where should a reservoir dam be built?',c:[[52.6,56],[34,51],[58,27.6]],a:0,ok:'Correct! ① is at <b>the narrow exit of a valley</b>: the upstream catchment is large, and the dam is short with less work.',bad:['','② is on a ridge; a ridge is a watershed and cannot hold water.','③ is a saddle, which is high ground and cannot collect water.']},
+ {q:'Climbing Peak A from the foot, which route has the gentlest slope?',c:[[31.5,12],[13,57],[71,9]],a:1,ok:'Correct! ② Going up the southwest ridge, contour lines are <b>sparse</b>, so the slope is gentle, easy and safe.',bad:['① On the north slope contour lines are dense, so it is steep and hard to climb.','','③ Passes a cliff, almost vertical, and it leads to Peak B instead.'],
+ routes:[[[31.5,12],[31.5,32.5]],[[13,57],[20.5,46],[27,39],[31,34.5]],[[71,9],[70,17.5],[69.6,24]]]},
+ {q:'Where should you go rock climbing?',c:[[52.3,47],[70,17.5],[58,27.6]],a:1,ok:'Correct! ② is a <b>Cliff</b>, several contour lines overlap and the cliff face is nearly vertical.',bad:['① is a valley; the slope is mild, but flash floods can occur in the rainy season.','','③ is a saddle; the ground is gentle.']}];
+PG[4]=(()=>{const M=MV1;let drops=[],ti=0,ans=null;const rv=chk('p4Rv',true);
+ function drop(u,v){if(T1.at(u,v)<20)return;drops.push({P:flow(T1,u,v),k:0});if(drops.length>160)drops.shift();}
+ function rain(n=60){for(let i=0;i<n;i++){const u=8+Math.random()*84,v=10+Math.random()*52;drop(u,v);}SFX.whoosh();}
+ function paintT(){const T=TASK[ti];$('p4Q').innerHTML=`<b>${T.q}</b><br>`+(ans==null?'Choose by tapping ① ② ③ on the map.':ans===T.a?`<span class="g">${T.ok}</span>`:`<span style="color:#ff6b81">${T.bad[ans]}</span>`);}
+ radio($('p4T'),b=>{ti=+b.dataset.t;ans=null;paintT();SFX.whoosh();});paintT();
+  $('p4R').onclick=()=>rain();$('p4C').onclick=()=>{drops=[];};
+ return {rain,drop,task(i,a){$('p4T').children[i].click();if(a!=null)this.pick(a);},pick(a){ans=a;paintT();a===TASK[ti].a?SFX.win():SFX.wrong();},
+ update(dt){drops.forEach(d=>{d.k=Math.min(d.P.length,d.k+dt*90);});},
+ draw(g,t){M.draw(g,{labels:LABS1});scaleBar(M,g,M.X(3),M.Y(66));northArrow(g,M.X(96),M.Y(7));
+ if(rv())RIVERS.forEach(R=>polyUV(M,g,R,'#3fb6ff',{w:5,glow:12,a:.9}));if(rv())tag(g,'River',M.X(55),M.Y(60),'#7fd4ff');
+ drops.forEach(d=>{const n=d.k|0;if(n<2)return;polyUV(M,g,d.P.slice(0,n),'#8fd8ff',{w:2,a:.55});const h=d.P[n-1];g.fillStyle='#d6f3ff';g.beginPath();g.arc(M.X(h[0]),M.Y(h[1]),3,0,7);g.fill();});
+ const T=TASK[ti];if(T.routes)T.routes.forEach((R,i)=>polyUV(M,g,R,i===T.a&&ans===T.a?OK:'#fff',{w:3.5,dash:[9,7],a:.95}));
+ T.c.forEach((p,i)=>{const c=ans==null?AMB:i===T.a?OK:i===ans?RED:'rgba(236,231,220,.6)';mark(M,g,p,'①②③'[i],c,{r:13,dy:1,f:`900 16px ${FONT}`,lc:'#07090d'});});},
+ down(p){if(!M.inside(...p))return;const T=TASK[ti];const i=T.c.findIndex(q=>Math.hypot(p[0]-M.X(q[0]),p[1]-M.Y(q[1]))<22);if(i>=0){this.pick(i);return true;}
+ drop(M.iu(p[0]),M.iv(p[1]));SFX.blip();return true;},
+ move(p){return M.inside(...p);}};})();
+
+/* ---------- 5 Five Basic Landforms ---------- */
+const LF=[{n:'Plain',h:'below 200 m',r:'ground is <b>flat</b>, with little relief',c:[88,22],e:[9,15]},
+ {n:'Plateau',h:'above 500 m',r:'top is <b>flat</b>, edges are <b>steep</b>',c:[20,30],e:[13,21]},
+ {n:'Mountain',h:'above 500 m',r:'<b>rugged peaks</b>, steep slopes',c:[57,15],e:[15,9]},
+ {n:'Hills',h:'below 500 m',r:'<b>rolling</b> gently, with gentle slopes',c:[86,56],e:[9,9]},
+ {n:'Basin',h:'varies',r:'<b>high around, low in the middle</b>',c:[60,44],e:[7.5,7.5]}];
+PG[5]=(()=>{const V=View3D(T2,{cx:540,cy:560,k:9.2,hz:.05,tilt:.95});let sel=null,tT=.95,tilt=.95;const ln=chk('p5L',false);
+ const tb=$('p5T');LF.forEach((L,i)=>{const cs=[el('div','',L.n,tb),el('div','',L.h,tb),el('div','',L.r,tb)];cs.forEach(c=>c.onclick=()=>set(i));L.cs=cs;});
+ const lg=$('p5Lg');MID2.forEach(m=>{const c=palAt(PAL2,m);el('i',null,null,lg).style.background=`rgb(${c.map(x=>x|0)})`;});
+ function set(i){sel=i;LF.forEach((L,k)=>L.cs.forEach(c=>c.classList.toggle('on',k===i)));const L=LF[i];$('p5D').innerHTML=`<b style="color:var(--amb);font-size:20px">${L.n}</b>: elevation ${L.h}, ${L.r}. `+
+ ({0:'Mostly found along the middle and lower reaches of big rivers and on coasts.',1:'Like mountains, it is high; the difference is a flat top.',2:'Like plateaus, it is high; the difference is many peaks and big relief.',3:'Like plains, it is low; the difference is small rolling hills.',4:'On a contour map: high values on the outer rings, low values on the inner rings.'}[i]);SFX.pick();}
+  $('p5V').onclick=()=>{tT=tT>.5?0:.95;$('p5V').textContent=tT>.5?'Flat ⤓':'3D ⤒';SFX.whoosh();};
+ return {set,setTilt(v){tT=v;$('p5V').textContent=tT>.5?'Flat ⤓':'3D ⤒';},update(dt){tilt+=(tT-tilt)*(1-Math.exp(-dt*3.2));if(Math.abs(tilt-tT)<.002)tilt=tT;V.tilt=tilt;V.cy=lerp(486,560,tilt/.95);},
+ draw(g,t){V.water=-1;V.rec=-1;V.allLines=ln();if(tilt>.02)V.draw(g);const mf=clamp(1-tilt/.18,0,1);
+ if(mf>0){const M=MapView(T2,V.cx-50*V.k,V.cy-35*V.k,V.k);g.save();g.globalAlpha=mf;M.draw(g,{lines:ln()});g.restore();}
+ LF.forEach((L,i)=>{const on=sel===i;if(sel!=null&&!on)return;const pts=[];for(let k=0;k<=48;k++){const a=k/48*Math.PI*2,u=L.c[0]+L.e[0]*Math.cos(a),v=L.c[1]+L.e[1]*Math.sin(a);pts.push(V.pt(u,v,T2.at(u,v)+30));}
+ if(on){g.save();g.strokeStyle=AMB;g.lineWidth=3;g.setLineDash([9,6]);g.shadowColor=AMB;g.shadowBlur=10;g.beginPath();pts.forEach((p,k)=>k?g.lineTo(...p):g.moveTo(...p));g.stroke();g.restore();}
+ const c=V.pt(L.c[0],L.c[1],T2.at(L.c[0],L.c[1])+40);tag(g,L.n,c[0],c[1]-14,on?AMB:'#fff','center',`900 ${on?26:21}px ${FONT}`);});}};})();
+
+/* ---------- 6 Quiz ---------- */
+const QZ=PG[6]=(()=>{const M=MV1;let rev=false;
+ const LV=[
+   {q:'In the map,  <b>A</b> is which terrain feature?',o:['Saddle','Peak','Ridge','Valley'],a:0,x:'A lies between two peaks in a relatively low spot, with two sets of closed contour lines back to back, so it is a <b>Saddle</b>. ',
+ draw(g,t){mark(M,g,FT.saddle,'A',AMB,{r:13,dy:1,f:`900 16px ${FONT}`,lc:'#07090d'});if(rev)drawPart(M,g,'saddle',t);}},
+   {q:'①②③ (three spots): which is most likely to have a river?',o:['②','①','③','None'],a:0,x:'② has contour lines bulging toward <b>higher ground</b>, so it is a valley where water gathers into a river; ① ③ bulge toward lower ground, so they are ridges (watersheds).',
+ draw(g,t){[FT.ridge,FT.valley,FT.ridgeSE].forEach((p,i)=>mark(M,g,p,'①②③'[i],AMB,{r:13,dy:1,f:`900 16px ${FONT}`,lc:'#07090d'}));if(rev){polyUV(M,g,RIVERS[0],'#3fb6ff',{w:5,glow:12});arwUV(M,g,[52.6,54],[51.8,42],CYAN);}}},
+   {q:'Climbing Peak A from the foot, which route has the <b>gentler slope</b>?',o:['Line B, sparse contour lines','Line A, shortest distance','Line B, dense contour lines','Line A, sparse contour lines'],a:0,x:'Line B goes up the ridge, where neighboring contour lines are far apart (<b>sparse</b>), so the slope is gentle; Line A crosses the north slope with dense contour lines, so it is steep.',
+ draw(g,t){const R=TASK[1].routes;polyUV(M,g,R[0],'#fff',{w:4,dash:[9,7]});polyUV(M,g,R[1],rev?OK:'#fff',{w:4,dash:[9,7]});tag(g,'Line A',M.X(31.5)+12,M.Y(16),'#fff','left');tag(g,'Line B',M.X(14)-10,M.Y(53),rev?OK:'#fff','right');}},
+   {q:'In the map, 3 contour lines overlap at the cliff, with a 100 m contour interval. What could the cliff’s relative height H be?',o:['200 m ≤ H &lt; 400 m','100 m ≤ H &lt; 300 m','Exactly 300 m','400 m ≤ H &lt; 500 m'],a:0,x:'Formula: <b>(n − 1)·d ≤ H &lt; (n + 1)·d</b>, n = 3, d = 100 m → 200 m ≤ H &lt; 400 m. ',
+ draw(g,t){drawPart(M,g,'cliff',t);if(rev)tag(g,'300, 400, 500 m lines overlap',M.X(70),M.Y(17.4)+30,AMB);}},
+   {q:'Standing on the summit, point <b>A</b>, can you see point <b>C</b> from there?',o:['No, Peak B blocks it','Yes, only a saddle in between','No, the cliff blocks it','Yes, point C is lower'],a:0,x:'Take the A→C profile: the line of sight is under 600 m when passing Peak B, but Peak B is about  <b>895 m</b>, so the line of sight is blocked by <b>Peak B</b>.',
+ draw(g,t){const A=FT.A,C=[88,26];polyUV(M,g,[A,C],rev?'#ff6b81':'#fff',{w:3,dash:[9,7]});mark(M,g,A,'A',RED,{r:12,dy:1,f:`900 15px ${NUMF}`});mark(M,g,C,'C',CYAN,{r:12,dy:1,f:`900 15px ${NUMF}`});
+ if(rev){const P=profile(T1,A,C),x0=650,x1=1004,y0=812,y1=700;g.save();g.fillStyle='rgba(7,9,13,.88)';rr(g,x0-14,y1-22,x1-x0+28,y0-y1+34,8);g.fill();g.restore();
+ g.save();g.fillStyle='rgba(180,140,90,.85)';g.beginPath();g.moveTo(x0,y0);P.forEach(([tt,h])=>g.lineTo(lerp(x0,x1,tt),lerp(y0,y1,h/1400)));g.lineTo(x1,y0);g.fill();g.restore();
+ g.save();g.setLineDash([7,5]);g.strokeStyle='#ff6b81';g.lineWidth=2.5;g.beginPath();g.moveTo(x0,lerp(y0,y1,(P[0][1]+8)/1400));g.lineTo(x1,lerp(y0,y1,P[P.length-1][1]/1400));g.stroke();g.restore();
+ txt(g,'A→C Profile',x0,y1-8,{al:'left',f:`800 14px ${FONT}`});}}}];
+ let li=0,sc=0,ans=LV.map(()=>null),order=LV.map(L=>L.o.map((_,i)=>i));
+ const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+ const lv=$('gLv');LV.forEach((_,i)=>{const b=el('button','lv',String(i+1).padStart(2,'0'),lv);b.onclick=()=>load(i);});
+ function paint(){[...lv.children].forEach((b,k)=>b.className='lv'+(k===li?' on':'')+(ans[k]===true?' ok':ans[k]===false?' bad':''));$('gSc').textContent=sc;}
+ function load(i){li=i;GEN++;const L=LV[i];$('gQ').innerHTML=L.q;const o=$('gOpts');o.innerHTML='';if(ans[i]==null)order[i]=shuffle(L.o.map((_,k)=>k));
+ order[i].forEach(k=>{const b=el('button','mb opt','<span>'+L.o[k]+'</span>',o);b.dataset.k=k;b.onclick=()=>answer(k);if(ans[i]!=null&&k===L.a)b.classList.add('ok');});
+    $('gX').className='qx'+(ans[i]!=null?' on':'');$('gX').innerHTML=L.x;rev=ans[i]!=null;$('gNext').classList.toggle('dis',ans[i]==null);paint();}
+ function answer(k){if(ans[li]!=null)return;const L=LV[li],ok=k===L.a;ans[li]=ok;if(ok)sc+=20;rev=true;
+    $('gOpts').querySelectorAll('.mb').forEach(b=>{const kk=+b.dataset.k;if(kk===L.a)b.classList.add('ok');else if(kk===k)b.classList.add('bad');});
+    $('gX').className='qx on';const v=$('gV');v.className='verdict on'+(ok?'':' bad');v.querySelector('.w').textContent=ok?'PERFECT':'MISS';v.querySelector('.s').textContent=ok?'+20':'See Explanation';
+ ok?SFX.win():SFX.wrong();later(1300,()=>v.className='verdict'+(ok?'':' bad'));paint();$('gNext').classList.remove('dis');if(ans.every(x=>x!=null))later(1700,debrief);}
+ function debrief(){const n=ans.filter(Boolean).length;$('gG').textContent=n===5?'S':n>=4?'A':n>=3?'B':'C';$('gT').textContent=`Correct ${n} / 5 · Score ${sc}`;$('gD').classList.add('on');SFX.win();}
+ function restart(){ans=LV.map(()=>null);sc=0;$('gD').classList.remove('on');load(0);}
+  $('gNext').onclick=()=>{const nx=ans.findIndex(x=>x==null);if(nx>=0)load(nx);else debrief();};$('gRe').onclick=restart;
+ return {LV,restart,load,answer:k=>answer(k),enter(){$('gD').classList.remove('on');const nx=ans.findIndex(x=>x==null);load(nx<0?0:nx);},update(){},
+ draw(g,t){M.draw(g,{labels:LABS1,dim:.08});scaleBar(M,g,M.X(3),M.Y(66));northArrow(g,M.X(96),M.Y(7));LV[li].draw(g,t);}};})();
+
+/* ---------- 7 Summary ---------- */
+PG[7]=(()=>{const TW=(1488-54)/4,box=i=>[56+i*(TW+18),170,TW,320];
+ const V=View3D(T1,{cx:box(0)[0]+TW/2,cy:box(0)[1]+200,k:3.4,hz:.1,tilt:.95,rec:1300,seaHide:true});
+ const crop=(i,c,s,f)=>{const [x,y,w,h]=box(i);g.save();g.beginPath();g.rect(x+1,y+40,w-2,h-40);g.clip();const M=MapView(T1,x+w/2-c[0]*s,y+40+(h-40)/2-c[1]*s,s);M.draw(g,{});f&&f(M);g.restore();};
+ return {update(){},draw(g,t){V.draw(g);
+ crop(1,[44,40],9,M=>{drawPart(M,g,'ridge',t,1);drawPart(M,g,'valley',t,1);tag(g,'Ridge',M.X(34)-14,M.Y(53),'#ff8a3d','right');tag(g,'Valley',M.X(52.5)+14,M.Y(44),CYAN,'left');});
+    {const [x,y,w,h]=box(2),P=profile(T1,[31.5,10],[33,63]);g.save();g.fillStyle='rgba(176,130,80,.9)';g.beginPath();g.moveTo(x+16,y+h-16);P.forEach(([tt,hh])=>g.lineTo(lerp(x+16,x+w-16,tt),lerp(y+h-16,y+60,hh/1400)));g.lineTo(x+w-16,y+h-16);g.fill();g.restore();
+ tag(g,'steep',x+70,y+130,'#ff6b81');tag(g,'gentle',x+w-80,y+190,OK);}
+ crop(3,[48,48],8,M=>{RIVERS.forEach(R=>polyUV(M,g,R,'#3fb6ff',{w:4,glow:10}));mark(M,g,TASK[0].c[0],'Dam',OK,{r:9,dy:-22});});}};})();
+
+/* ---------- 0 Cover ---------- */
+PG[0]=(()=>{const V=View3D(T1,{cx:1230,cy:560,k:6.6,hz:.19,tilt:.95,seaHide:true});
+ return {V,update(){},draw(g,t){const u=(t%16)/16,w=u<.7?u/.7*1340:1340*(1-(u-.7)/.3);V.water=w>4?Math.round(w/20)*20:-1;V.rec=Math.floor(Math.min(1300,u<.7?w:1340)/100)*100;V.allLines=false;V.draw(g);}};})();
+
+/* ---------- Pointer ---------- */
+let hold=null;
+cv.addEventListener('pointerdown',e=>{const P=PG[cur];if(!P||!P.down)return;const p=stagePos(e);if(P.down(p)){hold=P;cv.setPointerCapture(e.pointerId);e.preventDefault();}});
+cv.addEventListener('pointermove',e=>{const P=PG[cur];if(!P||!P.move)return;const p=stagePos(e);cv.style.cursor=P.move(p)?(hold?'grabbing':'pointer'):'default';});
+cv.addEventListener('pointerup',()=>{if(hold&&hold.up){hold.up();SFX.blip();}hold=null;});
+
+/* ---------- Page turning ---------- */
+function go(i){i=clamp(i,0,slides.length-1);if(i===cur)return;if(cur>=0)SFX.page();GEN++;hold=null;
+ slides.forEach((s,k)=>s.classList.toggle('on',k===i));cur=i;
+  $('pbar').style.width=((i+1)/slides.length*100)+'%';$('pg').innerHTML=`<b>${String(i+1).padStart(2,'0')}</b> / ${String(slides.length).padStart(2,'0')}`;
+  $('notesTxt').textContent=NOTES[i];try{history.replaceState(null,'','#'+(i+1));}catch(e){}
+ cv.style.opacity=i===7?.92:1;PG[i]&&PG[i].enter&&PG[i].enter();}
+let lastNow=performance.now();
+function frame(){const now=performance.now();const dt=Math.min(.05,Math.max(0,(now-lastNow)/1000));lastNow=now;const t=now/1000;
+ bg();const P=PG[cur];if(P){P.update(dt,t);P.draw(g,t);}requestAnimationFrame(frame);}
+fit();
+go(clamp((parseInt(location.hash.slice(1))||1)-1,0,slides.length-1));
+requestAnimationFrame(frame);
+
+</script>
+<!-- LivePage badge: web only, hidden inside the LivePage app -->
+<script id="lp-get-app">(function(){var w=window.webkit;if(w&&w.messageHandlers&&w.messageHandlers.lp)return;function add(){if(document.getElementById("lp-badge"))return;var a=document.createElement("a");a.id="lp-badge";a.href="https://apps.apple.com/app/id6837615778";a.target="_blank";a.rel="noopener";a.textContent="Made with LivePage · Get the app";a.style.cssText="position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:2147483647;font:600 11px/1 -apple-system,system-ui,sans-serif;letter-spacing:.04em;color:#f3efe6;background:rgba(12,14,20,.78);border:1px solid rgba(255,255,255,.16);padding:7px 11px;border-radius:99px;text-decoration:none;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)";document.body.appendChild(a);}if(document.body)add();else addEventListener("DOMContentLoaded",add);})();</script>
+</body>
+</html>

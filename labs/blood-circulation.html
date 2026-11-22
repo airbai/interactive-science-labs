@@ -1,0 +1,920 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Heart and Blood Circulation · Interactive Middle School Biology</title>
+<style>
+
+:root{
+  --ink:#0a0d12; --plate:rgba(10,13,18,.84);
+  --bone:#ece7dc; --dim:rgba(236,231,220,.62); --faint:rgba(236,231,220,.24); --line:rgba(236,231,220,.14);
+  --sig:#ff3b52; --amb:#ffb347; --cyan:#3ee0ff; --ok:#45e39a; --vio:#b58cff;
+  --disp:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --serif:"Songti SC","STSong","Noto Serif SC","SimSun",serif;
+  --num:"DIN Alternate","DIN Condensed","Bahnschrift","Arial Narrow",Arial,sans-serif;
+  --mono:"SF Mono",Menlo,Consolas,"Courier New",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#050608}
+#viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+#stage{width:1600px;height:900px;flex:none;position:relative;overflow:hidden;color:var(--bone);font-family:var(--disp);background:#07090d;user-select:none;-webkit-user-select:none}
+button{font-family:inherit;color:inherit}
+#cv{position:absolute;left:0;top:0;width:1600px;height:900px;display:block;touch-action:none}
+.pbar{position:absolute;left:0;top:0;height:3px;background:var(--sig);box-shadow:0 0 12px var(--sig);transition:width .5s;z-index:30}
+.topr{position:absolute;right:40px;top:24px;display:flex;gap:10px;z-index:30}
+.ib{height:36px;padding:0 14px;border:1px solid var(--line);background:rgba(10,13,18,.6);border-radius:4px;font:600 13px var(--mono);letter-spacing:.12em;color:var(--dim);cursor:pointer;backdrop-filter:blur(6px)}
+.ib:hover{color:var(--bone);border-color:var(--faint)}
+.navr{position:absolute;right:40px;bottom:26px;display:flex;align-items:center;gap:14px;z-index:30}
+.navr .pg{font:500 15px var(--mono);letter-spacing:.2em;color:var(--dim)}
+.navr .pg b{color:var(--bone)}
+.arr{width:50px;height:50px;border:1px solid var(--faint);background:rgba(10,13,18,.6);border-radius:50%;font-size:22px;cursor:pointer;display:grid;place-items:center}
+.arr:hover{border-color:var(--sig);color:var(--sig);box-shadow:0 0 18px rgba(255,59,82,.35)}
+.slide{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity .5s,visibility .5s;pointer-events:none;z-index:5}
+.slide.on{opacity:1;visibility:visible}
+.slide .ui{pointer-events:auto}
+.eyebrow{display:flex;align-items:center;gap:14px;font:600 14px var(--mono);letter-spacing:.28em;color:var(--dim)}
+.tagx{font:800 15px var(--disp);letter-spacing:.1em;color:#fff;background:var(--sig);padding:5px 10px 4px}
+.hud-tl{position:absolute;left:56px;top:38px}
+.hud-tl h2{font:800 46px/1.12 var(--disp);letter-spacing:.04em;margin-top:12px;text-shadow:0 2px 24px rgba(0,0,0,.8)}
+.hud-tl h2 em{font-style:normal;color:var(--sig);text-shadow:0 0 30px rgba(255,59,82,.5)}
+.hint{position:absolute;left:56px;bottom:32px;font:600 16px var(--disp);color:var(--dim);letter-spacing:.06em}
+.hint b{color:var(--sig)}
+/* Right panel */
+.side{position:absolute;right:40px;top:84px;bottom:96px;width:500px;padding:18px 22px;background:var(--plate);border:1px solid var(--line);backdrop-filter:blur(8px);display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.side .k{font:600 12px var(--mono);letter-spacing:.26em;color:var(--dim)}
+.side h3{font:800 24px/1.35 var(--disp)}
+.side h3 i{font-style:normal;color:var(--sig)}
+.rowx{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.mb{height:40px;padding:0 14px;border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:4px;font:700 16px var(--disp);color:var(--dim);cursor:pointer;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.mb:hover{color:var(--bone);border-color:var(--faint)}
+.mb.on{color:#fff;border-color:rgba(255,59,82,.75);background:rgba(255,59,82,.16);box-shadow:0 0 14px rgba(255,59,82,.2)}
+.mb.go{background:var(--sig);border-color:var(--sig);color:#fff;box-shadow:0 0 20px rgba(255,59,82,.35)}
+.mb.go:hover{background:#ff5a6e}
+.mb.dis{opacity:.35;pointer-events:none}
+.mb i.d{width:14px;height:14px;border-radius:50%;display:inline-block;border:1px solid rgba(255,255,255,.35)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.rg{height:46px;padding:0 10px;border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:10px;text-align:left}
+.rg:hover{border-color:var(--faint);background:rgba(255,255,255,.06)}
+.rg b{font:700 19px var(--num);color:var(--bone);min-width:84px}
+.rg span{font:600 13px var(--disp);color:var(--dim)}
+.rg i{width:12px;height:22px;border-radius:2px 2px 6px 6px;flex:none;border:1px solid rgba(255,255,255,.3)}
+.rg.a{border-color:var(--cyan);background:rgba(62,224,255,.12)}.rg.b{border-color:var(--amb);background:rgba(255,179,71,.12)}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.slot{height:66px;border:1.5px dashed var(--faint);border-radius:4px;padding:8px 12px;cursor:pointer;display:flex;flex-direction:column;justify-content:center}
+.slot small{font:600 12px var(--mono);letter-spacing:.2em;color:var(--dim)}
+.slot b{font:800 22px var(--num);margin-top:2px}
+.slot.on{border-style:solid}.slot.sa.on{border-color:var(--cyan);box-shadow:0 0 14px rgba(62,224,255,.25)}.slot.sb.on{border-color:var(--amb);box-shadow:0 0 14px rgba(255,179,71,.25)}
+.slot.sa b{color:var(--cyan)}.slot.sb b{color:var(--amb)}
+.chk{display:flex;align-items:center;gap:10px;font:600 16px var(--disp);color:var(--dim);cursor:pointer}
+.chk i{width:22px;height:22px;border:1.5px solid var(--faint);border-radius:4px;display:grid;place-items:center;font-style:normal;font-size:15px}
+.chk.on{color:var(--bone)}.chk.on i{background:#f04a98;border-color:#f04a98;color:#fff}
+/* Result card */
+.res{position:absolute;left:520px;top:250px;width:500px;padding:22px 26px 20px;background:var(--plate);border:1px solid var(--line);border-top:3px solid var(--sig);backdrop-filter:blur(8px)}
+.res .k{font:600 12px var(--mono);letter-spacing:.28em;color:var(--dim)}
+.res .ph{font:900 40px/1.25 var(--disp);margin:8px 0 12px}
+.res .ph i{font-style:normal;color:var(--sig)}
+.res .eq{font:700 22px/1.5 var(--num);color:var(--cyan);letter-spacing:.02em;min-height:33px}
+.res .ion{font:600 17px var(--num);color:var(--dim);margin-top:4px}
+.res .nt{font:600 16px/1.5 var(--disp);color:var(--amb);margin-top:8px;min-height:24px}
+.conds{display:flex;gap:10px;margin-top:14px}
+.conds div{flex:1;height:58px;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;font:800 20px var(--disp);color:rgba(236,231,220,.3);transition:all .3s}
+.conds div small{font:600 11px var(--mono);letter-spacing:.2em}
+.conds div.on{color:var(--ink);background:var(--ok);border-color:var(--ok);box-shadow:0 0 20px rgba(69,227,154,.35)}
+.conds div.x{color:rgba(255,59,82,.6);border-color:rgba(255,59,82,.3)}
+/* Indicator table */
+.tb{width:100%;border-collapse:collapse;font:600 15px var(--disp)}
+.tb th{font:600 11px var(--mono);letter-spacing:.14em;color:var(--dim);text-align:center;padding:5px 4px;border-bottom:1px solid var(--line)}
+.tb td{padding:6px 4px;text-align:center;border-bottom:1px solid rgba(236,231,220,.06);color:var(--bone);height:38px}
+.tb td:first-child{text-align:left;font:700 16px var(--num)}
+.tb td i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.tb tr.hl td{background:rgba(255,179,71,.08)}
+.rule{border-left:3px solid var(--sig);padding:8px 12px;background:rgba(255,255,255,.03);font:600 16px/1.6 var(--disp)}
+.rule b{color:var(--sig)}.rule u{text-decoration:none;color:#ff6fb5}.rule s{text-decoration:none;color:#6f8cff}
+.warn{border:1px solid rgba(255,179,71,.5);background:rgba(255,179,71,.1);padding:10px 14px;font:700 17px/1.5 var(--disp);color:var(--amb);opacity:0;transform:translateY(8px);transition:all .4s}
+.warn.on{opacity:1;transform:none}
+/* Microscopic / Purification */
+.eqbig{font:800 30px/1.35 var(--num);color:var(--cyan);min-height:44px}
+.lg{display:flex;flex-wrap:wrap;gap:6px 12px;font:600 14px var(--num);color:var(--dim)}
+.lg span{display:flex;align-items:center;gap:6px}.lg i{width:14px;height:14px;border-radius:50%}
+.checks{display:flex;flex-direction:column;gap:7px}
+.checks div{display:flex;align-items:center;gap:12px;padding:9px 12px;border:1px solid var(--line);font:700 17px var(--disp);color:rgba(236,231,220,.35);transition:all .3s}
+.checks div b{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:15px;background:rgba(255,255,255,.06);flex:none}
+.checks div small{font:600 14px var(--disp);color:var(--dim);margin-left:auto;text-align:right}
+.checks div.y{color:var(--bone);border-color:rgba(69,227,154,.5)}.checks div.y b{background:var(--ok);color:var(--ink)}
+.checks div.n{color:var(--bone);border-color:rgba(255,59,82,.6)}.checks div.n b{background:var(--sig);color:#fff}
+.verd{font:900 30px var(--disp);min-height:40px}
+.verd.y{color:var(--ok)}.verd.n{color:var(--sig)}
+.qnum{display:flex;gap:6px}
+.lv{width:46px;height:40px;border:1px solid var(--line);background:rgba(255,255,255,.03);font:700 17px var(--num);cursor:pointer;color:var(--dim)}
+.lv.on{border-color:var(--bone);color:var(--bone)}
+.lv.ok{background:var(--ok);border-color:var(--ok);color:var(--ink)}
+.lv.bad{background:var(--sig);border-color:var(--sig);color:#fff}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:8px 14px;border:1.5px solid var(--faint);font:700 17px var(--disp);cursor:pointer;background:rgba(255,255,255,.03)}
+.chip.on{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 14px rgba(62,224,255,.3)}
+.chip.used{opacity:.35}
+.opt{height:56px;font-size:19px;justify-content:flex-start}
+.opt.ok{background:var(--ok);border-color:var(--ok);color:var(--ink)}
+.opt.bad{background:rgba(255,59,82,.25);border-color:var(--sig);color:#fff}
+.score{font:700 15px var(--mono);letter-spacing:.2em;color:var(--dim)}
+.score b{font:700 44px var(--num);color:var(--ok);letter-spacing:0;margin-left:8px}
+.verdict{position:absolute;left:520px;top:400px;transform:translate(-50%,-50%) scale(1.6);opacity:0;pointer-events:none;transition:all .4s cubic-bezier(.2,1.5,.4,1);text-align:center;z-index:9}
+.verdict.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.verdict .w{font:900 110px/1 var(--num);letter-spacing:.08em;color:var(--ok);text-shadow:0 0 50px rgba(69,227,154,.6)}
+.verdict.bad .w{color:var(--sig);text-shadow:0 0 50px rgba(255,59,82,.6)}
+.verdict .s{font:700 24px var(--disp);letter-spacing:.2em;margin-top:6px;text-shadow:0 1px 10px #000}
+.debrief{position:absolute;left:150px;top:230px;width:760px;padding:34px 40px;background:var(--plate);border:1px solid var(--line);border-top:3px solid var(--ok);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transform:translateY(20px);transition:all .5s;z-index:8;text-align:center}
+.debrief.on{opacity:1;transform:none;pointer-events:auto}
+.debrief .g{font:900 150px/1 var(--num);color:var(--ok);text-shadow:0 0 50px rgba(69,227,154,.5)}
+.debrief .t{font:800 30px var(--disp);margin-top:10px}
+/* title */
+.t-wrap{position:absolute;left:80px;top:140px;width:820px}
+.t-word{font:900 200px/1 var(--serif);letter-spacing:.04em;white-space:nowrap;margin:18px 0 18px -8px;background:linear-gradient(180deg,#fff 0%,#e9e2d2 60%,#b9b09d 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 6px 40px rgba(0,0,0,.7))}
+.t-word span{background:linear-gradient(180deg,#ffd0d6,#ff3b52 60%,#c4122a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 30px rgba(255,59,82,.6))}
+.t-sub{font:800 44px var(--disp);letter-spacing:.2em;margin-bottom:24px}
+.t-prem{position:relative;padding-top:18px;border-top:1px solid var(--line);font:500 24px/1.6 var(--disp);color:rgba(236,231,220,.92);letter-spacing:.04em;max-width:640px}
+.t-prem::before{content:"";position:absolute;left:0;top:-2px;width:90px;height:3px;background:var(--sig)}
+.t-act{display:flex;gap:14px;margin-top:30px}
+.cta{height:58px;padding:0 28px;font:800 21px var(--disp);letter-spacing:.1em;border:0;background:var(--sig);color:#fff;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:0 0 30px rgba(255,59,82,.4)}
+.cta:hover{background:#ff5a6e}
+.cta.sec{background:rgba(10,13,18,.6);border:1px solid var(--faint);box-shadow:none}
+.cta.sec:hover{border-color:var(--bone)}
+/* summary */
+.tiles{position:absolute;left:56px;right:56px;top:170px;display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.tile{height:620px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(10,13,18,.2) 0,rgba(10,13,18,.2) 52%,rgba(10,13,18,.88) 52%);padding:22px 24px;display:flex;flex-direction:column;justify-content:flex-end;opacity:0;transform:translateY(24px);transition:all .6s}
+.slide.on .tile{opacity:1;transform:none}
+.tile .n{font:600 13px var(--mono);letter-spacing:.3em;color:var(--dim);margin-bottom:auto}
+.tile .h{font:900 32px/1.25 var(--disp);letter-spacing:.02em}
+.tile .h i{font-style:normal;color:var(--sig)}
+.tile .d{font:500 18px/1.6 var(--disp);color:var(--dim);margin-top:10px;min-height:86px}
+#notes{position:absolute;right:40px;top:70px;width:460px;padding:20px 22px;background:rgba(10,13,18,.96);border:1px solid var(--line);border-top:3px solid var(--cyan);font-size:17px;line-height:1.75;color:var(--bone);z-index:40;opacity:0;transform:translateY(-8px);pointer-events:none;transition:all .3s}
+#notes.show{opacity:1;transform:none;pointer-events:auto}
+#notes h4{font:600 12px var(--mono);letter-spacing:.3em;color:var(--cyan);margin-bottom:8px}
+
+.slide:not(.on) .ui{pointer-events:none!important}
+.xl{font:600 14px var(--disp);color:var(--dim);letter-spacing:.04em}
+.rng{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:linear-gradient(90deg,#4f7bff,#ff3b52);outline:none;cursor:pointer}
+.rng::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;border:4px solid var(--sig);box-shadow:0 0 14px rgba(255,59,82,.5)}
+.rng::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:4px solid var(--sig)}
+.rv{font:800 22px var(--num);min-width:90px;text-align:right}
+.desc{font:600 16px/1.7 var(--disp);color:var(--dim)}
+.desc b{color:var(--bone)}.desc .w,.w{color:#ff6b81}.desc .a{color:#ff5a6e}.desc .v{color:#7f9dff}.desc .g{color:var(--ok)}
+.rule .a{color:#ff5a6e}.rule .v{color:#7f9dff}
+.big{font:900 34px/1.2 var(--disp);letter-spacing:.02em;display:flex;align-items:center;gap:12px}
+.big i{font-style:normal;color:var(--sig)}
+.big small{font:800 15px var(--disp);padding:4px 10px;border-radius:3px;color:#fff;letter-spacing:.04em}
+.big small.a{background:#e2304a}.big small.v{background:#3f63d6}.big small.n{background:#555c68}
+.pt{width:100%;border-collapse:collapse;font:600 15px var(--disp)}
+.pt th{font:600 11px var(--mono);letter-spacing:.14em;color:var(--dim);text-align:center;padding:5px 4px;border-bottom:1px solid var(--line)}
+.pt td{padding:7px 5px;text-align:center;border-bottom:1px solid rgba(236,231,220,.06);color:var(--dim);transition:all .25s}
+.pt td:first-child{text-align:left;font-weight:800}
+.pt tr{cursor:pointer}
+.pt tr.on td{background:rgba(255,59,82,.12);color:var(--bone)}
+.pt tr.on td:first-child{color:var(--sig)}
+.pt .o{color:var(--ok)}.pt .c{color:#ff6b81}
+.chain{display:flex;flex-wrap:wrap;gap:4px 2px;align-items:center;font:700 14px var(--disp)}
+.chain span{padding:5px 8px;border:1px solid var(--line);color:var(--dim);transition:all .25s}
+.chain i{font-style:normal;color:var(--faint);font-size:12px}
+.chain span.on{color:#fff;border-color:var(--sig);background:rgba(255,59,82,.18);box-shadow:0 0 12px rgba(255,59,82,.25)}
+.chain.v span.on{border-color:#4f7bff;background:rgba(79,123,255,.2);box-shadow:0 0 12px rgba(79,123,255,.3)}
+.chain span.st{border-style:dashed}
+.rd{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font:600 15px var(--disp);color:var(--dim)}
+.rd b{font:800 24px var(--disp);color:var(--bone)}.rd b.g{color:var(--ok)}
+.sort{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.sort .mb{justify-content:center;padding:0 6px;font-size:15px}
+.sort .mb.a{background:rgba(226,48,74,.3);border-color:#ff5a6e;color:#fff}
+.sort .mb.v{background:rgba(63,99,214,.35);border-color:#7f9dff;color:#fff}
+.sort .mb.ok{box-shadow:0 0 0 2px var(--ok)}.sort .mb.bad{box-shadow:0 0 0 2px var(--amb)}
+.qx{font:600 16px/1.6 var(--disp);color:var(--amb);min-height:52px;opacity:0;transition:opacity .4s}
+.qx.on{opacity:1}
+.quizbar{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px dashed rgba(255,179,71,.5);background:rgba(255,179,71,.06);font:800 22px var(--disp)}
+.quizbar i{font-style:normal;color:var(--amb)}
+.quizbar small{margin-left:auto;font:700 15px var(--mono);color:var(--dim)}
+</style>
+<style id="en-fit">.t-word{font-size:108px!important}</style></head>
+<body>
+<div id="viewport"><div id="stage">
+<canvas id="cv"></canvas>
+<div class="pbar" id="pbar"></div>
+<div class="topr"><button class="ib" id="sndBtn">Sound ON</button><button class="ib" onclick="$('notes').classList.toggle('show')">Teacher notes</button><button class="ib" onclick="toggleFS()">Fullscreen ⛶</button></div>
+<div id="notes"><h4>TEACHER NOTE</h4><div id="notesTxt"></div></div>
+
+<section class="slide" data-name="Cover">
+  <div class="t-wrap ui">
+    <div class="eyebrow"><span class="tagx">Middle School Biology</span><span>Transport of Substances in the Body · Biology</span></div>
+    <div class="t-word">Blood <span>Circulation</span></div>
+    <div class="t-sub">Heart · Vessels · Systemic and Pulmonary Circulation</div>
+    <div class="t-prem">Four Heart Chambers and Valves · Three Vessel Types · Systemic and Pulmonary Circulation<br>The heart beats, the blood flows: see it, and you will remember it.</div>
+    <div class="t-act"><button class="cta" onclick="go(1)">Start ▶</button><button class="cta sec" onclick="go(4)">Circulation Diagram</button><button class="cta sec" onclick="go(7)">Quiz</button></div>
+  </div>
+</section>
+
+<section class="slide" data-name="Heart Structure">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">01</span><span>HEART</span></div><h2>Heart Structure: <em>Four Chambers</em></h2></div>
+  <div class="hint">Tap any part of the heart · Left and right in the diagram are <b>opposite to yours</b> (as if facing you)</div>
+  <div class="side ui">
+    <div class="k">CLICK · Tap a part</div>
+    <div class="big" id="h1N">Tap the heart</div>
+    <div class="desc" id="h1D" style="min-height:82px">The heart is mainly made of <b>cardiac muscle</b>, divided into four chambers: left atrium, left ventricle, right atrium, right ventricle.</div>
+    <div class="rowx"><div class="chk on" id="h1Lab"><i>✓</i>Show names</div><div class="chk" id="h1Wall" style="margin-left:14px"><i>✓</i>Compare wall thickness</div></div>
+    <div class="rowx"><button class="mb go" id="h1Q">Quiz Me: Find the Part ▶</button></div>
+    <div class="quizbar" id="h1Bar" style="display:none">Tap: <i id="h1T">Left ventricle</i><small id="h1S">0 / 0</small></div>
+    <table class="pt" id="h1Tb"><thead><tr><th>Chamber</th><th>Connected vessels</th><th>Blood </th></tr></thead><tbody>
+      <tr data-k="RA"><td>Right atrium</td><td>Superior and inferior vena cava</td><td style="color:#7f9dff">Deoxygenated blood</td></tr>
+      <tr data-k="RV"><td>Right ventricle</td><td>Pulmonary artery</td><td style="color:#7f9dff">Deoxygenated blood</td></tr>
+      <tr data-k="LA"><td>Left atrium</td><td>Pulmonary vein</td><td style="color:#ff6b81">Oxygenated blood</td></tr>
+      <tr data-k="LV"><td>Left ventricle</td><td>Aorta</td><td style="color:#ff6b81">Oxygenated blood</td></tr></tbody></table>
+    <div class="rule">Atria connect to <b>veins</b>, ventricles connect to <b>arteries</b> (atria to veins, ventricles to arteries)<br><b>Left ventricle</b> has the thickest wall: it pumps blood to the whole body<br>Atrium and ventricle on the same side are connected; left and right sides are <b>not connected</b></div>
+  </div>
+</section>
+
+<section class="slide" data-name="How It Works">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">02</span><span>CARDIAC CYCLE</span></div><h2>How the Heart <em>Pumps Blood</em></h2></div>
+  <div class="side ui">
+    <div class="k">CARDIAC CYCLE · Tap a row to freeze</div>
+    <table class="pt"><thead><tr><th>Phase</th><th>AV valve</th><th>Arterial valve</th><th>Blood flow</th></tr></thead><tbody id="h2T"></tbody></table>
+    <div class="rowx" id="h2Sp"><span class="xl">Speed</span><button class="mb" data-v=".2">Slow ×0.2</button><button class="mb on" data-v=".5">×0.5</button><button class="mb" data-v="1">Normal</button><button class="mb go" id="h2P" style="margin-left:auto">Pause ❚❚</button></div>
+    <div class="rowx"><span class="xl">Heart rate</span><input type="range" class="rng" id="h2R" min="60" max="120" step="1" value="75"><b class="rv" id="h2Rv">75 bpm</b></div>
+    <div class="desc" id="h2C"></div>
+    <div class="rowx"><div class="chk" id="h2B"><i>✓</i>If the valves fail (watch backflow)</div></div>
+    <div class="rule">Blood can only go: <b>atrium → ventricle → artery</b><br>AV valves open toward the <b>ventricle</b>, arterial valves open toward the <b>arteries</b> → this prevents <b>backflow</b><br>Ventricles contract: AV valves <b>close</b>, arterial valves <b>open</b></div>
+  </div>
+</section>
+
+<section class="slide" data-name="Three Vessel Types">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">03</span><span>VESSELS</span></div><h2>Arteries · Veins ·  <em>Capillaries</em></h2></div>
+  <div class="hint" id="v3H">Tap a column to see how the three vessels differ</div>
+  <div class="side ui">
+    <div class="rowx" id="v3Tab"><button class="mb on" data-t="x">Structure Comparison</button><button class="mb" data-t="m">Microscope: Fish Tail Fin</button></div>
+    <div id="v3X" style="display:flex;flex-direction:column;gap:12px">
+      <table class="pt" id="v3Tb"><thead><tr><th></th><th>arteries</th><th>veins</th><th>Capillaries</th></tr></thead><tbody>
+        <tr><td>Wall</td><td>Thick, very elastic</td><td>Thinner, less elastic</td><td class="o">Thinnest, one layer of epithelial cells</td></tr>
+        <tr><td>Lumen</td><td>Smaller</td><td>Larger</td><td class="o">Smallest, red blood cells pass in single file</td></tr>
+        <tr><td>Blood speed</td><td class="c">Fastest</td><td>Slower</td><td class="o">Slowest</td></tr>
+        <tr><td>Flow direction</td><td>Heart → body</td><td>Body → heart</td><td>Links smallest arteries and veins</td></tr>
+        <tr><td>Features</td><td>Pulse</td><td>Limb veins have <b>venous valves</b></td><td>Allows <b>exchange of substances</b></td></tr>
+      </tbody></table>
+      <div class="rowx"><button class="mb" id="v3Back">Simulate venous backflow</button><span class="xl">Venous valves close</span></div>
+      <div class="rule">IV drips and blood draws use <b>veins</b> (shallow, low pressure)<br>Taking a pulse feels an <b>arteries</b> (radial artery)</div>
+    </div>
+    <div id="v3M" style="display:none;flex-direction:column;gap:12px">
+      <div class="big" id="v3N">Tap a vessel</div>
+      <div class="desc" id="v3D" style="min-height:80px">Watch blood flow in a fish tail fin under a low-power microscope. Look at the <b>Flow direction</b> and <b>red blood cells </b>pass through.</div>
+      <div class="rowx"><button class="mb" id="v3All">Mark all</button><button class="mb" id="v3Clr">Clear</button></div>
+      <div class="rule">Flows from trunk to branches →  <b>arteries</b><br>Flows from branches into trunk →  <b>veins</b><br>red blood cells <b>single-file</b> →  <b>Capillaries</b><br>Wrap the gill cover and body in wet cotton so the fish can breathe</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-name="Blood Circulation">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">04</span><span>CIRCULATION</span></div><h2>Systemic and <em>Pulmonary Circulation</em></h2></div>
+  <div class="hint">Tap any vessel or chamber · Red is oxygenated blood, blue is deoxygenated</div>
+  <div class="side ui">
+    <div class="rowx" id="c4M"><button class="mb on" data-m="all">All</button><button class="mb" data-m="sys">Systemic</button><button class="mb" data-m="pul">Pulmonary Circulation</button><button class="mb go" id="c4Go" style="margin-left:auto">Follow a Drop of Blood ▶</button></div>
+    <div class="k">Systemic · oxygenated → deoxygenated</div>
+    <div class="chain" id="c4S"></div>
+    <div class="k">Pulmonary · deoxygenated → oxygenated</div>
+    <div class="chain v" id="c4P"></div>
+    <div class="big" id="c4N" style="font-size:28px">Tap a segment</div>
+    <div class="desc" id="c4D" style="min-height:56px"></div>
+    <div class="rule"><b>LV</b>Start<b>RA</b>back: systemic loop<br><b>RV</b>Start<b>LA</b>back: pulmonary loop<br>The two loops run <b>at the same time</b> and connect at the heart</div>
+  </div>
+</section>
+
+<section class="slide" data-name="exchange of substances">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">05</span><span>EXCHANGE</span></div><h2>Oxygenated and <em>Deoxygenated blood</em></h2></div>
+  <div class="side ui">
+    <div class="k">WHAT CHANGES · Where blood changes color</div>
+    <div class="desc"><b class="a">Oxygenated blood</b>: rich in oxygen, bright red<br><b class="v">Deoxygenated blood</b>: low in oxygen, dark red (shown blue here)</div>
+    <div class="rule">Through <b>the lungs</b> capillaries: deoxygenated →  <span class="a">Oxygenated blood</span><br>Through <b>tissue</b> capillaries: oxygenated →  <span class="v">Deoxygenated blood</span><br>Gas exchange relies on <b>diffusion</b>: high concentration → low concentration</div>
+    <div class="k">SORT · What blood flows here? Tap to switch</div>
+    <div class="sort" id="e5G"></div>
+    <div class="rowx"><button class="mb go" id="e5C">Check</button><button class="mb" id="e5R">Retry</button><span class="xl" id="e5V" style="margin-left:6px"></span></div>
+    <div class="desc" style="font-size:15px">Oxygenated vs. deoxygenated depends on <b>oxygen content</b>, not on the vessel type: the pulmonary artery carries deoxygenated blood and the pulmonary vein carries oxygenated blood.</div>
+  </div>
+</section>
+
+<section class="slide" data-name="Trace a Pill">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">06</span><span>TRACE</span></div><h2>Trace a Pill: <em>Its Route</em></h2></div>
+  <div class="hint">Exam favorite: an IV injection or oral medicine reaches which heart chamber first?</div>
+  <div class="side ui">
+    <div class="k">FROM · Where the drug enters the blood</div>
+    <div class="rowx" id="t6F"><button class="mb on" data-f="arm">IV in arm vein</button><button class="mb" data-f="gut">Oral (absorbed in small intestine)</button><button class="mb" data-f="lung">Oxygen in alveoli</button></div>
+    <div class="k">TO · Where it must go</div>
+    <div class="rowx" id="t6T"><button class="mb on" data-t="ton">Tonsils (throat)</button><button class="mb" data-t="foot">Foot wound</button><button class="mb" data-t="lung">Lung infection</button><button class="mb go" id="t6Go" style="margin-left:auto">Start ▶</button></div>
+    <div class="chain" id="t6L" style="min-height:96px"></div>
+    <div class="rd"><span>First heart chamber reached: </span><b class="g" id="t6A">—</b><span>Passes through the heart </span><b id="t6B">—</b></div>
+    <div class="rule">A drug entering through a vein first returns to the <b>Right atrium</b>, goes around the <b>Pulmonary Circulation</b>, then the <b>Aorta</b> sends it to the whole body<br>Oxygen in alveoli: via the <b>Pulmonary vein</b> first reaches the <b>Left atrium</b></div>
+  </div>
+</section>
+
+<section class="slide" data-name="Quiz">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">07</span><span>MISSION</span></div><h2>5 Exam <em>Questions</em></h2></div>
+  <div class="side ui">
+    <div class="rowx" style="justify-content:space-between"><div class="qnum" id="gLv"></div><div class="score">SCORE<b id="gSc">0</b></div></div>
+    <h3 id="gQ"></h3>
+    <div class="grid2" id="gOpts" style="grid-template-columns:1fr"></div>
+    <div class="qx" id="gX"></div>
+    <div class="rowx"><button class="mb go" id="gNext">Next →</button><button class="mb" id="gRe">Start Over</button></div>
+  </div>
+  <div class="verdict" id="gV"><div class="w">PERFECT</div><div class="s">+20</div></div>
+  <div class="debrief ui" id="gD"><div class="g" id="gG">S</div><div class="t" id="gT"></div><div class="rowx" style="justify-content:center;margin-top:24px"><button class="mb go" onclick="QZ.restart()">Try Again</button><button class="mb" onclick="go(8)">Summary →</button></div></div>
+</section>
+
+<section class="slide" data-name="Summary">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">08</span><span>DEBRIEF</span></div><h2>Blood Circulation: <em>Four Takeaways</em> to Keep</h2></div>
+  <div class="tiles">
+    <div class="tile" style="transition-delay:.05s" onclick="go(1)"><div class="n">01 · Heart</div><div class="h">Atria to veins<br><i>ventricles to arteries</i></div><div class="d">Four chambers; left ventricle has the thickest wall; same-side atrium and ventricle connect, left and right do not</div></div>
+    <div class="tile" style="transition-delay:.15s" onclick="go(2)"><div class="n">02 · Valves</div><div class="h">Open one<br>way only<i>open</i></div><div class="d">Atrium → ventricle → artery, preventing backflow</div></div>
+    <div class="tile" style="transition-delay:.25s" onclick="go(3)"><div class="n">03 · Vessels</div><div class="h">Branching arteries<br><i>single-file</i> capillaries</div><div class="d">Merging ones are veins; capillary walls are one cell thick and blood flows slowest</div></div>
+    <div class="tile" style="transition-delay:.35s" onclick="go(4)"><div class="n">04 · Circulation</div><div class="h">LV → RA<br><i>RV → LA</i></div><div class="d">Systemic: oxygenated becomes deoxygenated; pulmonary: deoxygenated becomes oxygenated</div></div>
+  </div>
+</section>
+
+<div class="navr"><span class="pg" id="pg"></span><button class="arr" onclick="go(cur-1)">←</button><button class="arr" onclick="go(cur+1)">→</button></div>
+</div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+/* ================= Sound ================= */
+const SFX=(()=>{let ctx=null,master=null,muted=false,nb=null,lastT=0;
+ try{muted=localStorage.getItem('blood_mute')==='1';}catch(e){}
+ function ac(){if(!ctx){const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;ctx=new AC();master=ctx.createGain();master.gain.value=.5;
+ const comp=ctx.createDynamicsCompressor();master.connect(comp);comp.connect(ctx.destination);
+ nb=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate);const d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;}
+ if(ctx.state==='suspended')ctx.resume();return ctx;}
+ function quiet(){return muted||(typeof cur!=='undefined'&&cur===0&&!window.__promo);}
+ function tone({f=440,f2=0,type='sine',t=0,dur=.2,vol=.2,att=.004}){if(quiet())return;const c=ac();if(!c)return;
+ const o=c.createOscillator(),g=c.createGain(),s=c.currentTime+t;o.type=type;o.frequency.setValueAtTime(f,s);if(f2)o.frequency.exponentialRampToValueAtTime(f2,s+dur);
+ g.gain.setValueAtTime(.0001,s);g.gain.linearRampToValueAtTime(vol,s+att);g.gain.exponentialRampToValueAtTime(.0001,s+dur);o.connect(g);g.connect(master);o.start(s);o.stop(s+dur+.05);}
+ function noise({t=0,dur=.2,vol=.1,f=2000,f2=0,type='bandpass',Q=1}){if(quiet())return;const c=ac();if(!c)return;
+ const src=c.createBufferSource(),fl=c.createBiquadFilter(),g=c.createGain(),s=c.currentTime+t;src.buffer=nb;src.loop=true;
+ fl.type=type;fl.Q.value=Q;fl.frequency.setValueAtTime(f,s);if(f2)fl.frequency.exponentialRampToValueAtTime(f2,s+dur);
+ g.gain.setValueAtTime(.0001,s);g.gain.linearRampToValueAtTime(vol,s+Math.min(.03,dur/3));g.gain.exponentialRampToValueAtTime(.0001,s+dur);
+ src.connect(fl);fl.connect(g);g.connect(master);src.start(s);src.stop(s+dur+.05);}
+ return {get muted(){return muted;},setMuted(m){muted=m;try{localStorage.setItem('blood_mute',m?'1':'0');}catch(e){}if(!m){ac();this.click();}},unlock(){ac();},
+ click(){tone({f:1100,f2:700,type:'triangle',dur:.05,vol:.06});},
+ tick(){const n=performance.now();if(n-lastT<45)return;lastT=n;tone({f:3000,type:'square',dur:.015,vol:.015});},
+ pick(){tone({f:2637,type:'sine',dur:.25,vol:.06});tone({f:3951,type:'sine',dur:.16,vol:.025});},
+ blip(){tone({f:1300,f2:1700,type:'sine',dur:.08,vol:.1});},
+ drip(){tone({f:1500,f2:520,type:'sine',dur:.09,vol:.13});tone({f:2400,f2:1200,type:'sine',t:.015,dur:.05,vol:.04});},
+ fizz(){noise({dur:1.1,vol:.07,f:6000,f2:3500,type:'highpass',Q:.7});noise({dur:.5,vol:.05,f:1800,Q:4});},
+ ppt(){noise({dur:.7,vol:.06,f:900,f2:300,type:'lowpass'});tone({f:330,f2:220,type:'triangle',dur:.35,vol:.08});tone({f:660,type:'sine',t:.05,dur:.5,vol:.04});},
+ color(){tone({f:880,f2:1320,type:'sine',dur:.35,vol:.07});tone({f:1760,type:'sine',t:.08,dur:.4,vol:.03});},
+ bond(i=0){const f=[523,659,784,988,1175][i%5];tone({f,type:'triangle',dur:.25,vol:.1});tone({f:f*2,type:'sine',dur:.2,vol:.03});},
+ paper(){noise({dur:.18,vol:.06,f:3000,Q:1.2});tone({f:1000,f2:1400,type:'sine',t:.12,dur:.15,vol:.06});},
+ hit(i=0){const f=[784,988,1175,1319][i%4];tone({f,type:'triangle',dur:.6,vol:.18});tone({f:f*2,type:'sine',dur:.4,vol:.06});},
+ wrong(){tone({f:220,f2:140,type:'sawtooth',dur:.28,vol:.07});tone({f:233,f2:150,type:'square',dur:.28,vol:.03});},
+ win(){[523,659,784,1047].forEach((f,i)=>tone({f,t:i*.08,type:'square',dur:.2,vol:.05}));tone({f:1568,t:.32,type:'triangle',dur:.9,vol:.12});tone({f:2093,t:.32,type:'sine',dur:.9,vol:.05});},
+ beat(i=0){if(i===0){tone({f:68,f2:42,type:'sine',dur:.2,vol:.55});tone({f:110,f2:60,type:'triangle',dur:.1,vol:.12});}else{tone({f:92,f2:58,type:'sine',dur:.14,vol:.4});tone({f:150,f2:80,type:'triangle',dur:.07,vol:.1});}},
+ page(){noise({dur:.4,vol:.05,f:500,f2:2200,Q:.8});},
+ whoosh(){noise({dur:.55,vol:.14,f:300,f2:3000,Q:2.5});},
+  };})();
+document.addEventListener('pointerdown',()=>SFX.unlock(),{once:true});
+document.addEventListener('click',e=>{if(e.target.closest('button'))SFX.click();},true);
+/* ================= General drawing ================= */
+const NUMF='"DIN Alternate","Bahnschrift","Arial Narrow",Arial,sans-serif',FONT='"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif';
+const RED='#ff3b52',WARM='#ff5a4a',COLD='#3ea8ff',CYAN='#3ee0ff',AMB='#ffb347',OK='#45e39a',BONE='#ece7dc',HI='#4aa8ff',LO='#ff5a4a';
+const DEG=Math.PI/180;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t,ease=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const G2=(x,c,w)=>Math.exp(-(((x-c)/w)**2));
+let GEN=0;function later(ms,f){const k=GEN;setTimeout(()=>{if(k===GEN)f();},ms);}
+function rgba(c,a){return `rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a})`;}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
+function txt(g,s,x,y,o={}){g.save();g.font=o.f||`700 20px ${FONT}`;g.textAlign=o.al||'center';g.textBaseline='middle';g.globalAlpha=o.a??1;
+ if(o.st!==false){g.lineJoin='round';g.lineWidth=o.sw||5;g.strokeStyle='rgba(7,9,13,.88)';g.strokeText(s,x,y);}
+ g.fillStyle=o.c||BONE;if(o.glow){g.shadowColor=o.c||BONE;g.shadowBlur=o.glow;}g.fillText(s,x,y);g.restore();}
+function arw(g,x0,y0,x1,y1,o={}){const dx=x1-x0,dy=y1-y0,L=Math.hypot(dx,dy);if(L<3)return;const ux=dx/L,uy=dy/L,hs=Math.min(o.hs||16,L*.6),c=o.c||RED;
+ g.save();g.globalAlpha=o.a??1;g.strokeStyle=c;g.fillStyle=c;g.lineWidth=o.w||4;g.lineCap='round';if(o.glow!==0){g.shadowColor=c;g.shadowBlur=o.glow??10;}
+ if(o.dash)g.setLineDash(o.dash);g.beginPath();g.moveTo(x0,y0);g.lineTo(x1-ux*hs*.8,y1-uy*hs*.8);g.stroke();g.setLineDash([]);
+ g.beginPath();g.moveTo(x1,y1);g.lineTo(x1-ux*hs-uy*hs*.5,y1-uy*hs+ux*hs*.5);g.lineTo(x1-ux*hs+uy*hs*.5,y1-uy*hs-ux*hs*.5);g.closePath();g.fill();g.restore();
+ if(o.label)txt(g,o.label,o.lx??(x0+x1)/2,o.ly??((y0+y1)/2-20),{c:o.lc||c,f:o.f||`800 22px ${FONT}`,glow:8});}
+function badge(g,s,x,y,col,a=1,r=19){if(a<=.01)return;g.save();g.globalAlpha=a;g.shadowColor=col;g.shadowBlur=16;g.fillStyle=col;g.beginPath();g.arc(x,y,r,0,7);g.fill();g.shadowBlur=0;
+ g.lineWidth=2;g.strokeStyle='rgba(255,255,255,.85)';g.stroke();g.restore();txt(g,s,x,y+1,{c:'#fff',f:`900 ${Math.round(r*1.05)}px ${FONT}`,st:false,a});}
+/* Smooth polyline + flowing dashes + arrows */
+function flowPath(g,P,o){if(P.length<2)return;g.save();g.globalAlpha=o.a??1;g.lineCap='round';g.lineJoin='round';
+ const tr=()=>{g.beginPath();g.moveTo(P[0][0],P[0][1]);for(let i=1;i<P.length-1;i++){const mx=(P[i][0]+P[i+1][0])/2,my=(P[i][1]+P[i+1][1])/2;g.quadraticCurveTo(P[i][0],P[i][1],mx,my);}
+ const n=P.length-1;g.lineTo(P[n][0],P[n][1]);};
+ g.strokeStyle=o.c;g.globalAlpha=(o.a??1)*.28;g.lineWidth=(o.w||3)*2.6;g.shadowColor=o.c;g.shadowBlur=14;tr();g.stroke();
+ g.globalAlpha=o.a??1;g.shadowBlur=8;g.lineWidth=o.w||3;g.setLineDash(o.dash||[16,9]);g.lineDashOffset=-(o.t||0)*(o.sp||34);tr();g.stroke();g.setLineDash([]);g.restore();
+ const n=P.length-1,a=P[n],b=P[n-1],L=Math.hypot(a[0]-b[0],a[1]-b[1])||1,hs=(o.hs||13);
+ arw(g,a[0]-(a[0]-b[0])/L*hs*1.6,a[1]-(a[1]-b[1])/L*hs*1.6,a[0],a[1],{c:o.c,w:o.w||3,hs,glow:8,a:o.a??1});}
+
+
+/* ================= Blood circulation: shared ================= */
+const ART='#ff3b52',VEN='#4f7bff',ARTd='#d8344a',VENd='#3f63d6';
+const oxC=o=>[lerp(79,255,o),lerp(123,59,o),lerp(255,82,o)];
+const oxD=o=>[lerp(63,216,o),lerp(99,52,o),lerp(214,74,o)];
+const HITC=document.createElement('canvas');HITC.width=1600;HITC.height=900;const HIT=HITC.getContext('2d');
+function smooth(P,closed){const p=new Path2D(),n=P.length,mid=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2];
+ if(closed){const m=mid(P[n-1],P[0]);p.moveTo(m[0],m[1]);for(let i=0;i<n;i++){const a=P[i],mm=mid(a,P[(i+1)%n]);p.quadraticCurveTo(a[0],a[1],mm[0],mm[1]);}p.closePath();}
+ else{p.moveTo(P[0][0],P[0][1]);for(let i=1;i<n-1;i++){const mm=mid(P[i],P[i+1]);p.quadraticCurveTo(P[i][0],P[i][1],mm[0],mm[1]);}p.lineTo(P[n-1][0],P[n-1][1]);}
+ return p;}
+const scl=(P,c,k)=>P.map(([x,y])=>[c[0]+(x-c[0])*k,c[1]+(y-c[1])*k]);
+const cen=P=>{let x=0,y=0;P.forEach(p=>{x+=p[0];y+=p[1];});return [x/P.length,y/P.length];};
+/* Polyline: length, sampling points */
+function poly(P){const L=[0];for(let i=1;i<P.length;i++)L.push(L[i-1]+Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]));
+ return {P,L,len:L[L.length-1],at(d){d=clamp(d,0,this.len);let i=1;while(i<L.length-1&&L[i]<d)i++;const f=(d-L[i-1])/((L[i]-L[i-1])||1),a=P[i-1],b=P[i];return [lerp(a[0],b[0],f),lerp(a[1],b[1],f),Math.atan2(b[1]-a[1],b[0]-a[0])];},
+ dist(x,y){let m=1e9;for(let i=1;i<P.length;i++){const a=P[i-1],b=P[i],dx=b[0]-a[0],dy=b[1]-a[1],t=clamp(((x-a[0])*dx+(y-a[1])*dy)/((dx*dx+dy*dy)||1),0,1);m=Math.min(m,Math.hypot(x-a[0]-t*dx,y-a[1]-t*dy));}return m;}};}
+function tube(g,P,w,col,o={}){const p=smooth(P,false);g.save();g.globalAlpha=o.a??1;g.lineCap=o.cap||'round';g.lineJoin='round';
+ if(o.hl){g.strokeStyle=AMB;g.lineWidth=w+14;g.shadowColor=AMB;g.shadowBlur=26;g.stroke(p);g.shadowBlur=0;}
+ g.strokeStyle='rgba(6,8,12,.92)';g.lineWidth=w+6;g.stroke(p);
+ g.strokeStyle=col;g.lineWidth=w;g.shadowColor=col;g.shadowBlur=o.glow??10;g.stroke(p);g.shadowBlur=0;
+ g.strokeStyle='rgba(255,255,255,.2)';g.lineWidth=Math.max(2,w*.24);g.translate(-w*.1,-w*.12);g.stroke(p);g.restore();}
+function pill(g,s,x,y,col,o={}){g.save();g.font=o.f||`800 16px ${FONT}`;const w=g.measureText(s).width+18,h=o.h||26;g.globalAlpha=o.a??1;
+ g.fillStyle=col;rr(g,x-w/2,y-h/2,w,h,4);g.fill();g.restore();txt(g,s,x,y+1,{c:'#fff',f:o.f||`800 16px ${FONT}`,st:false,a:o.a??1});}
+
+/* ================= 1/2 Heart cross-section ================= */
+const HP={
+ out:[[330,330],[300,420],[298,520],[318,630],[378,730],[470,800],[560,842],[640,815],[728,740],[788,630],[803,510],[788,400],[758,335],[690,318],[600,318],[480,322]],
+ RA:[[340,352],[455,347],[470,410],[460,478],[400,486],[345,470],[330,410]],
+ RV:[[335,510],[460,505],[527,512],[535,600],[520,690],[480,760],[430,745],[360,665],[322,580]],
+ LA:[[625,352],[745,347],[770,400],[755,462],[690,470],[630,462],[615,410]],
+ LV:[[560,500],[640,492],[735,505],[742,600],[712,690],[650,765],[600,760],[572,690],[560,600]]};
+const HV=[
+ {id:'IVC',c:VENd,w:46,P:[[352,470],[292,522],[264,640],[258,866]]},
+ {id:'PVs',c:ARTd,w:24,P:[[750,390],[830,374],[928,364]]},
+ {id:'PVs',c:ARTd,w:24,P:[[748,440],[830,452],[928,466]]},
+ {id:'PA',c:VENd,w:34,P:[[500,300],[560,292],[660,292],[780,300],[925,304]]},
+ {id:'PA',c:VENd,w:36,P:[[478,270],[380,262],[290,272],[200,284]]},
+ {id:'PA',c:VENd,w:48,P:[[505,528],[505,400],[500,300],[470,262]]},
+ {id:'AO',c:ARTd,w:15,P:[[630,192],[618,108]]},{id:'AO',c:ARTd,w:15,P:[[680,170],[684,100]]},{id:'AO',c:ARTd,w:15,P:[[732,172],[752,104]]},
+ {id:'AO',c:ARTd,w:46,P:[[585,528],[585,380],[590,245],[640,178],[720,166],[790,205],[805,265],[806,330]]},
+ {id:'SVC',c:VENd,w:50,P:[[385,136],[385,250],[390,362]]}];
+HV.forEach(v=>v.path=smooth(v.P,false));
+const VALV=[
+ {id:'TV',c:[405,496],h:[[352,496],[458,496]],L:52,dir:1,ty:'av',r:36},
+ {id:'MV',c:[688,483],h:[[638,483],[738,483]],L:49,dir:1,ty:'av',r:36},
+ {id:'PVv',c:[505,468],h:[[482,468],[528,468]],L:22,dir:-1,ty:'sl',r:24},
+ {id:'AVv',c:[585,468],h:[[562,468],[608,468]],L:22,dir:-1,ty:'sl',r:24}];
+const HFLOW={
+ vin:[{c:VEN,P:[[385,170],[387,290],[395,400]]},{c:VEN,P:[[258,820],[268,620],[300,520],[368,450]]},{c:ART,P:[[920,366],[830,376],[735,402]]},{c:ART,P:[[920,464],[830,452],[735,432]]}],
+ av:[{c:VEN,P:[[405,400],[405,520],[425,650]]},{c:ART,P:[[690,400],[688,510],[660,680]]}],
+ out:[{c:VEN,P:[[455,700],[505,560],[505,420],[498,300],[440,264],[260,276]]},{c:ART,P:[[650,720],[590,570],[586,400],[598,232],[690,168],[790,206],[806,320]]}],
+ back:[{c:AMB,P:[[425,600],[405,520],[400,420]]},{c:AMB,P:[[660,620],[688,520],[690,410]]}]};
+const PART={
+ RA:{n:'Right atrium',b:'v',d:'Connects to <b>Superior and inferior vena cava</b>, receives blood returning from the whole body.'},
+ RV:{n:'Right ventricle',b:'v',d:'Connects to <b>Pulmonary artery</b>, pumps blood to the lungs. Compared with the left ventricle, its wall is <b>thinner</b>: it only sends blood to the lungs, a short trip.'},
+ LA:{n:'Left atrium',b:'a',d:'Connects to <b>Pulmonary vein</b>, receives oxygen-rich blood returning from the lungs.'},
+ LV:{n:'Left ventricle',b:'a',d:'Connects to <b>Aorta</b>, pumps blood to the whole body. Of the four chambers, it has <b>the thickest wall</b> and the strongest contraction: the longest trip.'},
+ AO:{n:'Aorta',b:'a',d:'Left ventricle → body. The largest artery, with a thick, elastic wall.'},
+ PA:{n:'Pulmonary artery',b:'v',d:'Right ventricle → lungs. <b class="w">Common mistake</b>: it is called an artery, yet it carries <b>Deoxygenated blood</b>. '},
+ PVs:{n:'Pulmonary vein',b:'a',d:'Lungs → left atrium. <b class="w">Common mistake</b>: it is called a vein, yet it carries <b>Oxygenated blood</b>. '},
+ SVC:{n:'Superior vena cava',b:'v',d:'Head and arms → right atrium.'},
+ IVC:{n:'Inferior vena cava',b:'v',d:'Trunk and legs → right atrium.'},
+ TV:{n:'AV valve',b:'n',d:'Between atrium and ventricle, the <b>opens only toward the ventricle</b>: blood can only flow from atrium to ventricle.'},
+ PVv:{n:'Arterial valve',b:'n',d:'Between ventricle and artery, the <b>opens only toward the artery</b>: blood can only flow from ventricle to artery.'}};
+PART.MV=PART.TV;PART.AVv=PART.PVv;
+const HLAB=[
+ {id:'SVC',t:'Superior vena cava',a:[385,180],l:[245,165]},{id:'IVC',t:'Inferior vena cava',a:[262,735],l:[150,745]},
+ {id:'AO',t:'Aorta',a:[770,190],l:[890,150]},{id:'PA',t:'Pulmonary artery',a:[225,282],l:[160,345]},
+ {id:'PVs',t:'Pulmonary vein',a:[928,415],l:[975,415],no:1},
+ {id:'TV',t:'AV valve',a:[380,496],l:[200,430]},{id:'MV',t:'AV valve',a:[716,485],l:[905,575]},
+ {id:'PVv',t:'Arterial valve',a:[545,468],l:[545,440],no:1}];
+function HeartScene(o={}){const S=Object.assign({tx:0,ty:0,sc:1,aK:0,vK:0,av:1,sl:0,fl:{vin:.6,av:.5,out:0,back:0},sel:null,hov:null,labels:true,wall:false,tt:0,quiz:false,flow:true},o);
+ S.loc=(X,Y)=>[(X-S.tx)/S.sc,(Y-S.ty)/S.sc];
+ S.geom=()=>{const kA=1-.1*S.aK,kV=1-.14*S.vK;return {RA:scl(HP.RA,cen(HP.RA),kA),LA:scl(HP.LA,cen(HP.LA),kA),RV:scl(HP.RV,[440,600],kV),LV:scl(HP.LV,[650,610],kV),out:scl(HP.out,[555,560],1-.035*S.vK)};};
+ S.pick=(X,Y)=>{const [x,y]=S.loc(X,Y);for(const v of VALV)if(Math.hypot(x-v.c[0],y-v.c[1])<v.r)return v.id;
+ for(let i=HV.length-1;i>=0;i--){const v=HV[i];HIT.lineWidth=v.w+10;if(HIT.isPointInStroke(v.path,x,y))return v.id;}
+ const G=S.geom();for(const k of ['RA','RV','LA','LV'])if(HIT.isPointInPath(smooth(G[k],true),x,y))return k;return null;};
+ const same=(a,b)=>a&&b&&(a===b||PART[a]===PART[b]);
+ S.update=dt=>{S.tt+=dt;};
+ S.draw=(g,t)=>{const G=S.geom(),on=id=>same(S.sel,id)||same(S.hov,id),dimOther=S.sel&&!S.quiz;
+ g.save();g.translate(S.tx,S.ty);g.scale(S.sc,S.sc);
+    /* cardiac muscle */
+ const op=smooth(G.out,true),rg=g.createRadialGradient(540,520,40,555,560,330);rg.addColorStop(0,'#7a2a3c');rg.addColorStop(.7,'#4d1826');rg.addColorStop(1,'#2a0d16');
+ g.save();g.shadowColor='rgba(255,80,110,.45)';g.shadowBlur=40;g.fillStyle=rg;g.fill(op);g.restore();
+ g.save();g.clip(op);g.globalAlpha=.16;g.strokeStyle='#ff9aae';g.lineWidth=1.2;for(let i=0;i<16;i++){g.beginPath();g.moveTo(280+i*38,300);g.quadraticCurveTo(420+i*20,600,520+i*8,880);g.stroke();}g.restore();
+ g.strokeStyle='rgba(255,140,160,.55)';g.lineWidth=2.5;g.stroke(op);
+    /* vessel */
+ HV.forEach(v=>tube(g,v.P,v.w,v.c,{hl:on(v.id),a:dimOther&&!on(v.id)?.45:1}));
+    /* Chamber */
+ const cham=(k,col,dark)=>{const p=smooth(G[k],true),c=cen(G[k]),gr=g.createRadialGradient(c[0],c[1]-20,10,c[0],c[1],150);gr.addColorStop(0,col);gr.addColorStop(1,dark);
+ g.save();if(on(k)){g.shadowColor=AMB;g.shadowBlur=30;g.strokeStyle=AMB;g.lineWidth=8;g.stroke(p);}g.shadowBlur=0;g.globalAlpha=dimOther&&!on(k)?.55:1;g.fillStyle=gr;g.fill(p);
+ g.strokeStyle='rgba(255,255,255,.28)';g.lineWidth=2;g.stroke(p);g.restore();};
+ cham('RA','#5d7fff','#24356f');cham('RV','#5677f2','#1f2d63');cham('LA','#ff5a70','#7a1426');cham('LV','#ff4a62','#6d0f20');
+    /* Wall thickness comparison */
+ if(S.wall){const ln=(x0,y0,x1,y1,s,c)=>{g.save();g.strokeStyle=c;g.lineWidth=3;g.shadowColor=c;g.shadowBlur=10;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();
+        [[x0,y0],[x1,y1]].forEach(([x,y])=>{g.beginPath();g.arc(x,y,4,0,7);g.fillStyle=c;g.fill();});g.restore();txt(g,s,(x0+x1)/2,(y0+y1)/2+30,{c,f:`900 20px ${FONT}`});};
+ ln(305,600,330,600,'thinner',CYAN);ln(744,620,796,620,'Thickest',AMB);ln(536,640,560,640,'',BONE);txt(g,'Septum',548,676,{c:'rgba(236,231,220,.7)',f:`700 14px ${FONT}`});}
+    /* Blood flow arrows */
+ if(S.flow){const F=S.fl;const fp=(L,a,sp)=>{if(a>.03)L.forEach(f=>flowPath(g,f.P,{c:f.c,w:5,a:Math.min(1,a),t:S.tt,sp,hs:15,dash:[18,12]}));};
+ fp(HFLOW.vin,F.vin,60);fp(HFLOW.av,F.av,80);fp(HFLOW.out,F.out,120);fp(HFLOW.back,F.back,90);}
+    /* Valves */
+ VALV.forEach(v=>{const op=v.ty==='av'?S.av:S.sl,ang=op*(v.ty==='av'?72:78)*DEG*v.dir;
+ g.save();g.lineCap='round';const hl=on(v.id);g.strokeStyle=hl?AMB:'#fbe9d0';g.shadowColor=hl?AMB:'#ffd9b0';g.shadowBlur=hl?20:8;g.lineWidth=v.ty==='av'?7:5;
+      [[v.h[0],ang],[v.h[1],Math.PI-ang]].forEach(([h,a])=>{g.beginPath();g.moveTo(h[0],h[1]);g.lineTo(h[0]+Math.cos(a)*v.L,h[1]+Math.sin(a)*v.L);g.stroke();});
+ g.fillStyle=g.strokeStyle;v.h.forEach(h=>{g.beginPath();g.arc(h[0],h[1],4,0,7);g.fill();});g.restore();});
+    /* Labels */
+ if(S.labels&&!S.quiz){const cl={RA:[398,418],RV:[432,615],LA:[692,408],LV:[652,628]};
+ Object.entries(cl).forEach(([k,p])=>{const c=scl([p],cen(HP[k]),k[1]==='A'?1-.1*S.aK:1-.14*S.vK)[0];txt(g,PART[k].n,c[0],c[1],{f:`900 26px ${FONT}`,c:'#fff',sw:6});});
+ HLAB.forEach(L=>{const a=on(L.id)?1:.95,c=on(L.id)?AMB:BONE;if(!L.no){g.save();g.globalAlpha=.6*a;g.strokeStyle=c;g.lineWidth=1.5;g.beginPath();g.moveTo(L.a[0],L.a[1]);g.lineTo(L.l[0],L.l[1]+12);g.stroke();
+ g.beginPath();g.arc(L.a[0],L.a[1],4,0,7);g.fillStyle=c;g.fill();g.restore();}
+ txt(g,L.t,L.l[0],L.l[1],{f:`800 ${L.no?17:20}px ${FONT}`,c,a});});}
+ g.restore();};
+ return S;}
+/* Cardiac cycle: u ∈ [0,1) */
+function cyc(u){const ph=u<.125?0:u<.5?1:2;return {ph,aK:ph===0?Math.sin(Math.PI*u/.125):0,vK:ph===1?Math.sin(Math.PI*(u-.125)/.375):0,av:ph===1?0:1,sl:ph===1&&u>.15&&u<.49?1:0};}
+function pump(S,u,dt,broken){const c=cyc(u),k=1-Math.exp(-dt*22);S.aK=c.aK;S.vK=c.vK;
+ S.av+=((broken&&c.ph===1?.45:c.av)-S.av)*k;S.sl+=(c.sl-S.sl)*k;
+ const T={vin:c.ph===0?.35:1,av:c.ph===0?1:c.ph===2?.55:0,out:c.ph===1?1:0,back:broken&&c.ph===1?1:0};
+ for(const x in T)S.fl[x]+=(T[x]-S.fl[x])*(1-Math.exp(-dt*14));return c;}
+
+/* ================= 3 Three Vessel Types ================= */
+const MVS=[
+ {id:'a0',k:'a',w:32,P:[[160,480],[260,476],[340,470]],sp:280},
+ {id:'a1',k:'a',w:21,P:[[340,470],[392,418],[460,372]],sp:230},
+ {id:'a2',k:'a',w:21,P:[[340,470],[392,530],[460,590]],sp:230},
+ {id:'c1',k:'c',w:9,P:[[460,372],[505,330],[555,350],[600,318],[640,350]],sp:42},
+ {id:'c2',k:'c',w:9,P:[[460,372],[512,438],[570,455],[610,530],[640,610]],sp:42},
+ {id:'c3',k:'c',w:9,P:[[460,590],[520,642],[585,626],[640,610]],sp:42},
+ {id:'v1',k:'v',w:25,P:[[640,350],[700,392],[760,470]],sp:120},
+ {id:'v2',k:'v',w:25,P:[[640,610],[700,560],[760,470]],sp:120},
+ {id:'v0',k:'v',w:38,P:[[760,470],[845,476],[940,482]],sp:140}];
+MVS.forEach(v=>{v.pl=poly(v.P);v.path=smooth(v.P,false);});
+const MINFO={a:['arteries','Blood flows from <b>trunk to branches</b>, flow speed: <b>Fastest</b>. '],v:['veins','Blood flows from <b>branches merge into trunk</b>, slower flow.'],c:['Capillaries','Narrowest lumen; red blood cells go <b>single-file</b>, flow speed: <b>Slowest</b>; ideal for exchange of substances.']};
+function VesselScene(o={}){const S=Object.assign({tab:'x',col:-1,back:0,backT:0,known:new Set(),sel:null,hov:null,tt:0,micro:{cx:548,cy:480,r:312}},o);
+  /* Microscope particles */
+ S.MP=[];MVS.forEach(v=>{const n=v.k==='c'?Math.round(v.pl.len/30):Math.round(v.pl.len*v.w/260);for(let i=0;i<n;i++)S.MP.push({v,d:v.k==='c'?i*v.pl.len/n:Math.random()*v.pl.len,off:v.k==='c'?0:(Math.random()-.5)*v.w*.62,r:v.k==='c'?4.4:3.6+Math.random()*1.2});});
+  /* Longitudinal-section particles */
+ S.LP=[];[['a',80,320,10],['v',395,665,10],['c',735,985,2.4]].forEach(([k,x0,x1,n])=>{const N=k==='c'?9:26;for(let i=0;i<N;i++)S.LP.push({k,x0,x1,x:k==='c'?x0+i*(x1-x0)/N:lerp(x0,x1,Math.random()),y:k==='c'?0:(Math.random()-.5)*(k==='a'?32:52)});});
+ S.pickM=(x,y)=>{const m=S.micro;if(Math.hypot(x-m.cx,y-m.cy)>m.r)return null;let best=null,bd=1e9;MVS.forEach(v=>{const d=v.pl.dist(x,y)-v.w/2;if(d<bd){bd=d;best=v;}});return bd<12?best:null;};
+ S.update=dt=>{S.tt+=dt;if(S.backT>0){S.backT-=dt;}S.back+=((S.backT>0?1:0)-S.back)*(1-Math.exp(-dt*6));
+ S.MP.forEach(p=>{p.d+=p.v.sp*dt;if(p.d>p.v.pl.len)p.d-=p.v.pl.len;});
+ S.LP.forEach(p=>{const sp=p.k==='a'?250*(1+.5*Math.sin(S.tt*8)):p.k==='v'?95:28;let vx=sp;
+ if(p.k==='v'){vx=95*(1-S.back);if(S.back>.05&&p.x>562&&p.x<690)vx=-70*S.back;}
+ p.x+=vx*dt;if(p.x>p.x1)p.x-=p.x1-p.x0;if(p.x<p.x0)p.x+=p.x1-p.x0;});};
+ function rbc(g,x,y,r,a=1,ang=0){g.save();g.translate(x,y);g.rotate(ang);g.globalAlpha=a;g.fillStyle='#d2283c';g.beginPath();g.ellipse(0,0,r*1.25,r,0,0,7);g.fill();g.fillStyle='rgba(120,0,20,.55)';g.beginPath();g.ellipse(0,0,r*.55,r*.42,0,0,7);g.fill();g.restore();}
+ function cross(g){const t=S.tt,cols=[[200,'a'],[530,'v'],[858,'c']],yc=345;
+ cols.forEach(([x,k],i)=>{const hl=S.col===i;g.save();if(S.col>=0&&!hl)g.globalAlpha=.38;
+ if(k==='a'){const R=102*(1+.03*Math.sin(t*8));const gr=g.createRadialGradient(x,yc,40,x,yc,R);gr.addColorStop(0,'#c8566a');gr.addColorStop(1,'#7a2236');
+ g.fillStyle=gr;g.beginPath();g.arc(x,yc,R,0,7);g.fill();g.strokeStyle='rgba(255,200,210,.45)';g.lineWidth=2;for(let r=56;r<R;r+=9){g.beginPath();g.arc(x,yc,r,0,7);g.stroke();}
+ g.fillStyle='#8a0f22';g.beginPath();g.arc(x,yc,48,0,7);g.fill();for(let j=0;j<7;j++)rbc(g,x+Math.cos(j*2.3+t)*26,yc+Math.sin(j*1.7+t)*24,7);}
+ if(k==='v'){g.save();g.translate(x,yc);g.scale(1,.8);g.fillStyle='#5b2a44';g.beginPath();g.arc(0,0,104,0,7);g.fill();g.strokeStyle='rgba(220,200,230,.4)';g.lineWidth=2;g.beginPath();g.arc(0,0,96,0,7);g.stroke();
+ g.fillStyle='#3a1838';g.beginPath();g.arc(0,0,86,0,7);g.fill();g.restore();for(let j=0;j<9;j++)rbc(g,x+Math.cos(j*2.1+t*.4)*50,yc+Math.sin(j*1.3+t*.4)*38,7,1,j);}
+ if(k==='c'){g.strokeStyle='rgba(236,231,220,.25)';g.setLineDash([4,6]);g.lineWidth=1.2;g.beginPath();g.arc(x,yc,92,0,7);g.stroke();g.setLineDash([]);
+ txt(g,'Zoom',x+66,yc-80,{c:'rgba(236,231,220,.5)',f:`700 13px ${FONT}`});
+ g.fillStyle='#e3a0aa';g.beginPath();g.arc(x,yc,40,0,7);g.fill();g.fillStyle='#4a1424';g.beginPath();g.arc(x,yc,31,0,7);g.fill();
+ g.strokeStyle='#4a1424';g.lineWidth=2;for(let j=0;j<4;j++){const a=j*Math.PI/2+.4;g.beginPath();g.moveTo(x+Math.cos(a)*31,yc+Math.sin(a)*31);g.lineTo(x+Math.cos(a)*40,yc+Math.sin(a)*40);g.stroke();
+ g.fillStyle='#7d3b52';g.beginPath();g.ellipse(x+Math.cos(a+.75)*35.5,yc+Math.sin(a+.75)*35.5,4,2.4,a+.75+Math.PI/2,0,7);g.fill();}
+ rbc(g,x,yc,13);}
+ g.restore();
+ const NM=['arteries','veins','Capillaries'],SUB=['Thick wall · very elastic','Thin wall · large lumen','One layer of epithelial cells'];
+ txt(g,NM[i],x,yc+128,{f:`900 30px ${FONT}`,c:hl?AMB:BONE,a:S.col<0||hl?1:.45});txt(g,SUB[i],x,yc+160,{f:`700 16px ${FONT}`,c:'rgba(236,231,220,.7)',a:S.col<0||hl?1:.45});});
+    /* Longitudinal section */
+ const yl=650,tubeL=(x0,x1,h,col,i)=>{g.save();if(S.col>=0&&S.col!==i)g.globalAlpha=.38;g.fillStyle=col;rr(g,x0,yl-h/2,x1-x0,h,h/2);g.fill();g.strokeStyle='rgba(255,220,230,.45)';g.lineWidth=2;g.stroke();g.restore();};
+ tubeL(70,330,52*(1+.05*Math.sin(t*8)),'#7a1f30',0);tubeL(385,675,76,'#3e1c3e',1);tubeL(725,995,16,'#5a1a2a',2);
+    /* venous valves */
+ g.save();if(S.col>=0&&S.col!==1)g.globalAlpha=.38;g.strokeStyle=S.back>.3?AMB:'#f4dcc4';g.shadowColor=g.strokeStyle;g.shadowBlur=10;g.lineWidth=5;g.lineCap='round';
+ const th=lerp(.14,.86,S.back);[-1,1].forEach(s=>{g.beginPath();g.moveTo(520,yl+s*36);g.lineTo(520+Math.cos(th)*38,yl+s*(36-Math.sin(th)*38));g.stroke();});g.restore();
+ S.LP.forEach(p=>{const i=p.k==='a'?0:p.k==='v'?1:2;rbc(g,p.x,yl+p.y,p.k==='c'?6.2:6.5,S.col>=0&&S.col!==i?.38:1);});
+ arw(g,90,yl-58,300,yl-58,{c:'#ff7a8a',w:3,hs:12,glow:6,a:.85});arw(g,410,yl-62,650,yl-62,{c:'#9fb4ff',w:3,hs:12,glow:6,a:.85});arw(g,745,yl-34,975,yl-34,{c:'#e3a0aa',w:3,hs:12,glow:6,a:.85});
+ txt(g,'Fast',200,yl+60,{f:`900 22px ${FONT}`,c:'#ff7a8a'});txt(g,'Slow',530,yl+68,{f:`900 22px ${FONT}`,c:'#9fb4ff'});txt(g,'Slowest · single file',860,yl+44,{f:`900 22px ${FONT}`,c:'#e3a0aa'});
+ txt(g,'venous valves',520,yl-92,{f:`800 17px ${FONT}`,c:S.back>.3?AMB:'rgba(236,231,220,.75)'});
+ if(S.back>.3)txt(g,'Backflow blocked',530,yl+104,{f:`900 22px ${FONT}`,c:AMB,a:S.back,glow:12});}
+ function micro(g){const m=S.micro,t=S.tt;g.save();g.beginPath();g.arc(m.cx,m.cy,m.r,0,7);g.clip();
+ const bg=g.createRadialGradient(m.cx-60,m.cy-60,20,m.cx,m.cy,m.r);bg.addColorStop(0,'#f3e8d6');bg.addColorStop(1,'#cdb99c');g.fillStyle=bg;g.fillRect(m.cx-m.r,m.cy-m.r,m.r*2,m.r*2);
+ g.strokeStyle='rgba(150,120,90,.25)';g.lineWidth=3;for(let i=-6;i<8;i++){g.beginPath();g.moveTo(m.cx-m.r,m.cy+i*48-80);g.quadraticCurveTo(m.cx,m.cy+i*48-20,m.cx+m.r,m.cy+i*52+40);g.stroke();}
+ MVS.forEach(v=>{const hl=S.sel===v||S.hov===v,kn=S.known.has(v.k);g.save();g.lineCap='round';g.lineJoin='round';
+ if(hl){g.strokeStyle='rgba(255,140,40,.9)';g.lineWidth=v.w+12;g.stroke(v.path);}
+ g.strokeStyle=v.k==='c'?'rgba(200,110,110,.7)':'rgba(205,120,120,.75)';g.lineWidth=v.w+4;g.stroke(v.path);g.strokeStyle=v.k==='a'?'#f2b8b0':v.k==='v'?'#e6b4b8':'#f0c6c0';g.lineWidth=v.w;g.stroke(v.path);g.restore();});
+ S.MP.forEach(p=>{const [x,y,a]=p.v.pl.at(p.d);const nx=-Math.sin(a),ny=Math.cos(a);rbc(g,x+nx*p.off,y+ny*p.off,p.r,.92,a);});
+ MVS.forEach(v=>{if(!S.known.has(v.id)&&S.sel!==v)return;if(S.sel!==v&&['c2','a2','v2','c3'].includes(v.id))return;const [x,y]=v.pl.at(v.pl.len*.5),nm=MINFO[v.k][0];
+ pill(g,nm,x,y-(v.k==='c'?26:v.w/2+22),v.k==='a'?'#d8344a':v.k==='v'?'#3f63d6':'#c27a10',{f:`800 17px ${FONT}`});});
+ const vg=g.createRadialGradient(m.cx,m.cy,m.r*.72,m.cx,m.cy,m.r);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.6)');g.fillStyle=vg;g.fillRect(m.cx-m.r,m.cy-m.r,m.r*2,m.r*2);g.restore();
+ g.save();g.strokeStyle='#20252e';g.lineWidth=18;g.beginPath();g.arc(m.cx,m.cy,m.r+9,0,7);g.stroke();g.strokeStyle='rgba(236,231,220,.25)';g.lineWidth=1.5;g.beginPath();g.arc(m.cx,m.cy,m.r+19,0,7);g.stroke();g.restore();
+ txt(g,'Low power · Fish tail fin',m.cx-m.r+40,m.cy+m.r+22,{al:'left',c:'rgba(236,231,220,.6)',f:`700 15px ${FONT}`});}
+ S.draw=g=>{S.tab==='x'?cross(g):micro(g);};
+ return S;}
+
+/* ================= 4/6 Circulation Diagram ================= */
+const WV=(x0,x1,y,amp,n)=>{const P=[],N=Math.round(Math.abs(x1-x0)/12);for(let i=0;i<=N;i++){const f=i/N;P.push([lerp(x0,x1,f),y+amp*Math.sin(f*Math.PI*n*2)]);}return P;};
+const CS={
+ LV:{n:'Left ventricle',o:1,P:[[685,540],[685,598],[792,614]],nx:'AO',sp:120},
+ AO:{n:'Aorta',o:1,P:[[792,614],[880,614]],nx:['AOu','AOd'],sp:240},
+ AOu:{n:'Aorta',o:1,P:[[880,614],[880,172],[812,172]],nx:'CU',sp:240},
+ AOd:{n:'Aorta',o:1,P:[[880,614],[880,800],[812,800]],nx:'CD',sp:240},
+ CU:{n:'Head and arm capillaries',o:'dn',P:WV(812,250,172,7,9),nx:'SVC',sp:60},
+ CD:{n:'Trunk and leg capillaries',o:'dn',P:WV(812,262,800,7,9),nx:'IVC',sp:60},
+ SVC:{n:'Superior vena cava',o:0,P:[[250,172],[170,172],[170,456],[292,456]],nx:'RA',sp:170},
+ IVC:{n:'Inferior vena cava',o:0,P:[[262,800],[206,800],[206,500],[292,500]],nx:'RA',sp:170},
+ RA:{n:'Right atrium',o:0,P:[[292,478],[395,478],[395,540]],nx:'RV',sp:120},
+ RV:{n:'Right ventricle',o:0,P:[[395,540],[395,610],[470,610],[498,556]],nx:'PA',sp:120},
+ PA:{n:'Pulmonary artery',o:0,P:[[498,556],[540,512],[540,362],[380,362],[380,296]],nx:'CL',sp:240},
+ CL:{n:'Lung capillaries',o:'up',P:WV(380,700,290,7,6),nx:'PV',sp:60},
+ PV:{n:'Pulmonary vein',o:1,P:[[700,290],[700,360],[700,420]],nx:'LA',sp:170},
+ LA:{n:'Left atrium',o:1,P:[[700,420],[685,470],[685,540]],nx:'LV',sp:120}};
+for(const k in CS){const s=CS[k];s.k=k;s.pl=poly(s.P);s.len=s.pl.len;}
+const BOX={RA:[292,420,206,108],RV:[292,538,206,138],LA:[582,420,210,108],LV:[582,538,210,150]};
+const SYS=new Set(['LV','AO','AOu','AOd','CU','CD','SVC','IVC','RA']),PUL=new Set(['RV','PA','CL','PV','LA']);
+const SINFO={LV:'Start of the systemic loop: pumps oxygenated blood into the aorta.',AO:'Left ventricle → arteries → whole body.',AOu:'Left ventricle → arteries → whole body.',AOd:'Left ventricle → arteries → whole body.',
+ CU:'Exchanges substances with tissue cells: oxygen and nutrients enter cells, carbon dioxide and waste enter the blood →  <b class="v">becomes deoxygenated blood</b>. ',CD:'Exchanges substances with tissue cells: oxygen and nutrients enter cells, carbon dioxide and waste enter the blood →  <b class="v">becomes deoxygenated blood</b>. ',
+ SVC:'Head and arms → right atrium. The systemic loop ends at the right atrium.',IVC:'Trunk and legs → right atrium. The systemic loop ends at the right atrium.',RA:'Receives blood from the vena cavae; end of the systemic loop.',
+ RV:'Start of the pulmonary loop: pumps deoxygenated blood into the pulmonary artery.',PA:'Right ventricle → lungs. <b class="w">Common mistake</b>: it carries <b class="v">Deoxygenated blood</b>. ',CL:'Exchanges gases with alveoli: oxygen enters the blood, carbon dioxide enters the alveoli →  <b class="a">becomes oxygenated blood</b>. ',
+ PV:'Lungs → left atrium. <b class="w">Common mistake</b>: it carries <b class="a">Oxygenated blood</b>. ',LA:'Receives blood from the pulmonary veins; end of the pulmonary loop.'};
+const oxAt=(k,d)=>{const s=CS[k];return s.o==='dn'?1-clamp(d/s.len,0,1):s.o==='up'?clamp(d/s.len,0,1):s.o;};
+const xFrac=(k,x)=>{const P=CS[k].P;return clamp((P[0][0]-x)/(P[0][0]-P[P.length-1][0]),0,1)*CS[k].len;};
+const MARKS={ton:{k:'CU',x:470,n:'Tonsils'},arm:{k:'SVC',d:4,n:'Arm vein'},gut:{k:'CD',x:560,n:'Small intestine'},foot:{k:'CD',x:360,n:'Foot'},lung:{k:'CL',x:620,n:'Alveoli'}};
+const mkD=m=>m.d!=null?m.d:CS[m.k].P[0][0]>CS[m.k].P[CS[m.k].P.length-1][0]?xFrac(m.k,m.x):clamp((m.x-CS[m.k].P[0][0])/(CS[m.k].P[CS[m.k].P.length-1][0]-CS[m.k].P[0][0]),0,1)*CS[m.k].len;
+function croute(sk,sd,tk,td){const R=[];let k=sk,d=sd,heart=false;for(let n=0;n<30;n++){if(heart&&k===tk){R.push({k,d0:d,d1:td});break;}
+ R.push({k,d0:d,d1:CS[k].len});if(k==='RA'||k==='LA')heart=true;let nx=CS[k].nx;if(Array.isArray(nx))nx=tk==='CU'?'AOu':'AOd';k=nx;d=0;}return R;}
+function CircScene(o={}){const S=Object.assign({mode:'all',sel:null,hov:null,tt:0,N:170,spd:1,tr:null,marks:[],showLab:true},o);
+ const keys=Object.keys(CS),tot=keys.reduce((a,k)=>a+CS[k].len,0);
+ const nextK=k=>{const n=CS[k].nx;return Array.isArray(n)?(Math.random()<.45?n[0]:n[1]):n;};
+ S.P=[];for(let i=0;i<S.N;i++){let r=Math.random()*tot,k=keys[0];for(const kk of keys){if(r<CS[kk].len){k=kk;break;}r-=CS[kk].len;}S.P.push({k,d:r});}
+ S.inMode=k=>S.mode==='all'||(S.mode==='sys'?SYS:PUL).has(k);
+ S.pick=(x,y)=>{for(const k in BOX){const b=BOX[k];if(x>b[0]&&x<b[0]+b[2]&&y>b[1]&&y<b[1]+b[3])return k;}let best=null,bd=18;for(const k in CS){if(BOX[k])continue;const d=CS[k].pl.dist(x,y);if(d<bd){bd=d;best=k;}}return best;};
+ S.trace=(R,cb,spd=1)=>{S.tr={R,i:0,d:R[0].d0,trail:[],cb,spd,done:false};cb&&cb(R[0].k,0);};
+ S.update=dt=>{S.tt+=dt;S.P.forEach(p=>{p.d+=CS[p.k].sp*dt*S.spd;while(p.d>=CS[p.k].len){p.d-=CS[p.k].len;p.k=nextK(p.k);}});
+ const T=S.tr;if(T&&!T.done){let tau=dt;const V=k=>{const s=CS[k].sp;return (s<100?230:s*1.15)*T.spd;};
+ while(tau>0&&!T.done){const r=T.R[T.i],v=V(r.k),left=r.d1-T.d;if(v*tau<left){T.d+=v*tau;tau=0;}else{tau-=left/v;T.d=r.d1;
+ if(T.i<T.R.length-1){T.i++;T.d=T.R[T.i].d0;T.cb&&T.cb(T.R[T.i].k,T.i);}else{T.done=true;T.cb&&T.cb(null,-1);}}}
+ const p=CS[T.R[T.i].k].pl.at(T.d);T.trail.push([p[0],p[1]]);if(T.trail.length>46)T.trail.shift();}};
+ S.draw=(g,t,opt={})=>{const al=k=>S.inMode(k)?1:.13,hl=k=>S.sel===k||S.hov===k||(S.sel&&CS[S.sel]&&CS[S.sel].n===CS[k].n&&k.startsWith('AO')&&S.sel.startsWith('AO'));
+    /* Capillary bed */
+ const bed=(k,lab,y0,cA,cB)=>{const P=CS[k].P,x0=Math.min(P[0][0],P[P.length-1][0]),x1=Math.max(P[0][0],P[P.length-1][0]),y=P[0][1];g.save();g.globalAlpha=al(k);
+ const gr=g.createLinearGradient(P[0][0],0,P[P.length-1][0],0);gr.addColorStop(0,rgba(cA,.22));gr.addColorStop(1,rgba(cB,.22));g.fillStyle=gr;rr(g,x0-14,y-30,x1-x0+28,60,12);g.fill();
+ g.strokeStyle=hl(k)?AMB:'rgba(236,231,220,.18)';g.lineWidth=hl(k)?3:1.2;g.stroke();
+ for(let j=-2;j<=2;j++){if(j===0)continue;g.beginPath();P.forEach((p,i)=>{const yy=p[1]+j*9+Math.sin(i*.9+j)*3;i?g.lineTo(p[0],yy):g.moveTo(p[0],yy);});const lg=g.createLinearGradient(P[0][0],0,P[P.length-1][0],0);lg.addColorStop(0,rgba(cA,.55));lg.addColorStop(1,rgba(cB,.55));g.strokeStyle=lg;g.lineWidth=1.6;g.stroke();}
+ g.beginPath();P.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));const lg=g.createLinearGradient(P[0][0],0,P[P.length-1][0],0);lg.addColorStop(0,rgba(cA,1));lg.addColorStop(1,rgba(cB,1));g.strokeStyle=lg;g.lineWidth=3;g.stroke();g.restore();
+ if(S.showLab)txt(g,lab,y0[0],y0[1],{f:`800 18px ${FONT}`,c:hl(k)?AMB:'rgba(236,231,220,.85)',a:Math.max(.3,al(k))});};
+ bed('CU','Capillary network of head and arms',[705,126],ARTc_(),VENc_());bed('CD','Capillary network of trunk and legs (tissue cells · incl. small intestine)',[537,752],ARTc_(),VENc_());bed('CL','Lung capillary network (alveoli)',[540,246],VENc_(),ARTc_());
+    /* Heart */
+ g.save();g.globalAlpha=.9;const hs=new Path2D();hs.moveTo(540,392);hs.bezierCurveTo(430,360,262,380,268,520);hs.bezierCurveTo(272,640,420,700,540,722);hs.bezierCurveTo(660,700,812,640,816,520);hs.bezierCurveTo(820,380,650,360,540,392);
+ g.fillStyle='rgba(122,42,60,.35)';g.fill(hs);g.strokeStyle='rgba(255,140,160,.35)';g.lineWidth=2;g.stroke(hs);g.restore();
+ for(const k in BOX){const b=BOX[k],v=k[0]==='R';g.save();g.globalAlpha=al(k);const gr=g.createLinearGradient(0,b[1],0,b[1]+b[3]);gr.addColorStop(0,v?'rgba(79,123,255,.55)':'rgba(255,59,82,.55)');gr.addColorStop(1,v?'rgba(40,60,150,.55)':'rgba(140,20,40,.55)');
+ g.fillStyle=gr;rr(g,b[0],b[1],b[2],b[3],14);g.fill();g.strokeStyle=hl(k)?AMB:'rgba(255,255,255,.35)';g.lineWidth=hl(k)?4:1.5;if(hl(k)){g.shadowColor=AMB;g.shadowBlur=18;}g.stroke();g.restore();
+ const LP={RA:[436,450],RV:[436,652],LA:[636,450],LV:[630,664]}[k];txt(g,CS[k].n,LP[0],LP[1],{f:`900 22px ${FONT}`,c:'#fff',a:Math.max(.3,al(k))});}
+ g.save();g.strokeStyle='rgba(255,255,255,.4)';g.lineWidth=3;g.setLineDash([6,6]);g.beginPath();g.moveTo(540,410);g.lineTo(540,700);g.stroke();g.restore();
+    [[395,533],[685,533]].forEach(([x,y])=>{g.save();g.fillStyle='#fbe9d0';g.beginPath();g.moveTo(x-22,y-6);g.lineTo(x,y+8);g.lineTo(x+22,y-6);g.closePath();g.globalAlpha=.85;g.fill();g.restore();});
+    /* vessel */
+    ['AO','AOu','AOd','SVC','IVC','PA','PV'].forEach(k=>{const s=CS[k],c=s.o?ARTd:VENd;g.save();g.globalAlpha=al(k);g.lineJoin='round';g.lineCap='round';
+ if(hl(k)){g.strokeStyle=AMB;g.lineWidth=28;g.shadowColor=AMB;g.shadowBlur=22;g.beginPath();s.P.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke();g.shadowBlur=0;}
+ g.strokeStyle='rgba(6,8,12,.9)';g.lineWidth=22;g.beginPath();s.P.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke();g.strokeStyle=c;g.lineWidth=16;g.shadowColor=c;g.shadowBlur=10;g.stroke();g.restore();});
+    /* Vessel names */
+ if(S.showLab){const VL=[['AOu','Aorta',918,400,1],['AOd','',0,0,0],['SVC','Superior vena cava',128,300,1],['IVC','Inferior vena cava',240,650,1],['PA','Pulmonary artery',460,337,0],['PV','Pulmonary vein',740,368,1]];
+ VL.forEach(([k,n,x,y,vert])=>{if(!n)return;const c=hl(k)?AMB:CS[k].o?'#ff8a98':'#9fb4ff';if(vert&&(k==='SVC'||k==='AOu'||k==='IVC')){g.save();g.translate(x,y);txtV(g,n,c,Math.max(.3,al(k)));g.restore();}else txt(g,n,x,y,{f:`800 18px ${FONT}`,c,a:Math.max(.3,al(k))});});}
+    /* Marks */
+ S.marks.forEach(mk=>{const M=MARKS[mk],p=CS[M.k].pl.at(mkD(M));g.save();g.fillStyle=AMB;g.shadowColor=AMB;g.shadowBlur=14;g.beginPath();g.arc(p[0],p[1],7,0,7);g.fill();g.restore();
+ const dy={CU:34,CD:34,CL:34,SVC:34}[M.k];txt(g,M.n,p[0],p[1]+dy,{f:`900 17px ${FONT}`,c:AMB});});
+    /* Blood cells */
+ g.save();g.globalCompositeOperation='lighter';S.P.forEach(p=>{const a=al(p.k);if(a<.5)return;const [x,y]=CS[p.k].pl.at(p.d),c=oxC(oxAt(p.k,p.d));g.fillStyle=rgba(c,.95);g.beginPath();g.arc(x,y,4.2,0,7);g.fill();g.fillStyle=rgba(c,.25);g.beginPath();g.arc(x,y,9,0,7);g.fill();});g.restore();
+    /* Trace */
+ const T=S.tr;if(T){const r=T.R[T.i],p=CS[r.k].pl.at(T.d),c=oxC(oxAt(r.k,T.d));g.save();g.lineCap='round';
+ for(let i=1;i<T.trail.length;i++){g.strokeStyle=rgba([255,236,200],i/T.trail.length*.8);g.lineWidth=2+i/T.trail.length*6;g.beginPath();g.moveTo(T.trail[i-1][0],T.trail[i-1][1]);g.lineTo(T.trail[i][0],T.trail[i][1]);g.stroke();}
+ g.shadowColor='#fff';g.shadowBlur=26;g.fillStyle=rgba(c,1);g.beginPath();g.arc(p[0],p[1],11,0,7);g.fill();g.lineWidth=3;g.strokeStyle='#fff';g.stroke();g.restore();}
+  };
+ return S;}
+function ARTc_(){return [255,59,82];}function VENc_(){return [79,123,255];}
+function txtV(g,s,c,a){[...s].forEach((ch,i)=>txt(g,ch,0,(i-(s.length-1)/2)*21,{f:`800 18px ${FONT}`,c,a}));}
+
+/* ================= 5 exchange of substances ================= */
+function ExchScene(){const S={tt:0,G:[],R:[]};
+ const LC=poly([[70,610],[180,566],[290,528],[400,566],[510,610]]),TC=poly([[570,300],[680,330],[790,344],[900,330],[1010,300]]);
+ const AL={c:[290,352],r:138},CELLS=[[650,540,70],[792,590,74],[934,540,70]];
+ S.LC=LC;S.TC=TC;
+ for(let i=0;i<34;i++){S.R.push({c:LC,d:Math.random()*LC.len,off:(Math.random()-.5)*24});S.R.push({c:TC,d:Math.random()*TC.len,off:(Math.random()-.5)*24});}
+ const spawn=()=>{const r=Math.random();let p;
+ if(r<.28){const a=Math.random()*7,rr_=Math.random()*AL.r*.8,e=LC.at(LC.len*(.3+Math.random()*.4));p={ty:'o2',a:[AL.c[0]+Math.cos(a)*rr_,AL.c[1]+Math.sin(a)*rr_*.9],b:[e[0],e[1]]};}
+ else if(r<.5){const e=LC.at(LC.len*(.3+Math.random()*.4)),a=Math.random()*7,rr_=Math.random()*AL.r*.8;p={ty:'co2',a:[e[0],e[1]],b:[AL.c[0]+Math.cos(a)*rr_,AL.c[1]+Math.sin(a)*rr_*.9]};}
+ else{const C=CELLS[Math.floor(Math.random()*3)],e=TC.at(TC.len*(.15+Math.random()*.7)),a=Math.random()*7,q=[C[0]+Math.cos(a)*C[2]*.6,C[1]+Math.sin(a)*C[2]*.55],z=Math.random();
+ p=z<.3?{ty:'o2',a:[e[0],e[1]],b:q}:z<.5?{ty:'nu',a:[e[0],e[1]],b:q}:z<.8?{ty:'co2',a:q,b:[e[0],e[1]]}:{ty:'wa',a:q,b:[e[0],e[1]]};}
+ p.t=0;p.T=1.6+Math.random()*1.4;p.w=(Math.random()-.5)*40;return p;};
+ for(let i=0;i<70;i++){const p=spawn();p.t=Math.random()*p.T;S.G.push(p);}
+ const GC={o2:'#3ee0ff',co2:'#c3c9d4',nu:'#45e39a',wa:'#ffb347'},GN={o2:'O₂',co2:'CO₂',nu:'Nutrients',wa:'Waste'};
+ S.update=dt=>{S.tt+=dt;S.R.forEach(p=>{p.d+=70*dt;if(p.d>p.c.len)p.d-=p.c.len;});S.G.forEach((p,i)=>{p.t+=dt;if(p.t>p.T)S.G[i]=spawn();});};
+ S.draw=g=>{const fr=(x,y,w,h,title,res,ca,cb)=>{g.save();g.fillStyle='rgba(255,255,255,.025)';rr(g,x,y,w,h,10);g.fill();g.strokeStyle='rgba(236,231,220,.14)';g.lineWidth=1.2;g.stroke();g.restore();
+ txt(g,title,x+22,y+30,{al:'left',f:`900 24px ${FONT}`});
+ txt(g,res[0],x+w/2-70,y+h-34,{f:`900 26px ${FONT}`,c:rgba(ca,1)});txt(g,'→',x+w/2,y+h-34,{f:`900 26px ${FONT}`});txt(g,res[1],x+w/2+70,y+h-34,{f:`900 26px ${FONT}`,c:rgba(cb,1)});};
+ fr(52,168,476,690,'At alveoli: gas exchange',['Deoxygenated blood','Oxygenated blood'],VENc_(),ARTc_());fr(548,168,476,690,'At tissue cells: exchange of substances',['Oxygenated blood','Deoxygenated blood'],ARTc_(),VENc_());
+    /* Alveoli */
+ g.save();const ag=g.createRadialGradient(AL.c[0]-30,AL.c[1]-40,10,AL.c[0],AL.c[1],AL.r);ag.addColorStop(0,'rgba(120,200,255,.18)');ag.addColorStop(1,'rgba(120,200,255,.05)');g.fillStyle=ag;g.beginPath();g.arc(AL.c[0],AL.c[1],AL.r,0,7);g.fill();
+ g.strokeStyle='rgba(255,190,200,.75)';g.lineWidth=4;g.stroke();g.restore();txt(g,'Alveoli',AL.c[0],AL.c[1]-AL.r+30,{f:`800 18px ${FONT}`,c:'rgba(236,231,220,.8)'});
+ txt(g,'Alveolar and capillary walls are only one cell thick',290,690,{f:`700 15px ${FONT}`,c:'rgba(236,231,220,.6)'});
+    /* Tissue cells */
+ CELLS.forEach(([x,y,r],i)=>{g.save();g.fillStyle='rgba(255,179,120,.12)';g.strokeStyle='rgba(255,200,150,.6)';g.lineWidth=2.5;const P=[];for(let j=0;j<9;j++){const a=j/9*Math.PI*2,q=r*(1+.1*Math.sin(j*2.3+i));P.push([x+Math.cos(a)*q,y+Math.sin(a)*q*.85]);}
+ const p=smooth(P,true);g.fill(p);g.stroke(p);g.fillStyle='rgba(181,140,255,.5)';g.beginPath();g.arc(x+8,y-6,16,0,7);g.fill();g.restore();});
+ txt(g,'Tissue cells',792,700,{f:`800 18px ${FONT}`,c:'rgba(236,231,220,.8)'});
+    /* Capillaries */
+ const cap=(C,c0,c1)=>{const P=C.P,lg=g.createLinearGradient(P[0][0],0,P[P.length-1][0],0);lg.addColorStop(0,rgba(c0,.6));lg.addColorStop(1,rgba(c1,.6));
+ g.save();g.lineCap='round';g.lineJoin='round';const p=smooth(P,false);g.strokeStyle='rgba(255,220,230,.4)';g.lineWidth=50;g.stroke(p);g.strokeStyle=lg;g.lineWidth=44;g.stroke(p);g.restore();
+ S.R.filter(r=>r.c===C).forEach(r=>{const [x,y,a]=C.at(r.d),f=r.d/C.len,c=c0===VENc_()[0]?0:0;const col=rgba([lerp(c0[0],c1[0],f),lerp(c0[1],c1[1],f),lerp(c0[2],c1[2],f)],1);
+ g.save();g.translate(x-Math.sin(a)*r.off,y+Math.cos(a)*r.off);g.rotate(a);g.fillStyle=col;g.beginPath();g.ellipse(0,0,9,6,0,0,7);g.fill();g.restore();});
+ arw(g,P[0][0]+10,P[0][1]-40,P[0][0]+90,P[0][1]-50,{c:'rgba(236,231,220,.7)',w:2.5,hs:10,glow:0});};
+ cap(LC,VENc_(),ARTc_());cap(TC,ARTc_(),VENc_());txt(g,'Capillaries',150,640,{f:`700 15px ${FONT}`,c:'rgba(236,231,220,.6)'});txt(g,'Capillaries',600,250,{f:`700 15px ${FONT}`,c:'rgba(236,231,220,.6)'});
+    /* Gas/substance */
+ S.G.forEach((p,i)=>{const f=ease(clamp(p.t/p.T,0,1)),x=lerp(p.a[0],p.b[0],f)+Math.sin(f*Math.PI)*p.w,y=lerp(p.a[1],p.b[1],f),a=Math.min(1,p.t/.3,(p.T-p.t)/.3);
+ g.save();g.globalAlpha=a;g.fillStyle=GC[p.ty];g.shadowColor=GC[p.ty];g.shadowBlur=10;g.beginPath();g.arc(x,y,p.ty==='o2'||p.ty==='co2'?6:5,0,7);g.fill();g.restore();
+ if(i%5===0)txt(g,GN[p.ty],x+16,y-12,{f:`800 13px ${NUMF}`,c:GC[p.ty],a,al:'left'});});
+    /* Legend */
+    [['o2','Oxygen'],['co2','Carbon dioxide'],['nu','Nutrients'],['wa','Metabolic waste']].forEach(([k,n],i)=>{const x=110+i*150;g.save();g.fillStyle=GC[k];g.shadowColor=GC[k];g.shadowBlur=8;g.beginPath();g.arc(x,880,6,0,7);g.fill();g.restore();txt(g,n,x+14,880,{al:'left',f:`700 15px ${FONT}`,c:'rgba(236,231,220,.75)'});});};
+ return S;}
+
+</script>
+<script>
+/* ================= Pages ================= */
+const slides=[...document.querySelectorAll('.slide')];let cur=-1;
+const cv=$('cv'),g=cv.getContext('2d');let RK=1;
+const NOTES=[
+ 'Cover: the heart beats and the blood flows. This lesson covers middle school biology on transport of substances in the body: the heart, blood vessels and blood circulation. Keys: ← → turn pages, F fullscreen, M mute.',
+ 'Heart structure: tap any part to see its name, connected vessels and blood type. Stress three points: ① (1) atria connect to veins, ventricles to arteries; ② (2) the left ventricle has the thickest wall (the systemic loop is the longest trip); ③ (3) left and right in the diagram are opposite to the viewer, so imagine you are the person in the picture. Check “Compare wall thickness” to compare the two ventricles. Use “Quiz Me” to have students come up and tap parts.',
+ 'How the heart works: a cardiac cycle has three phases. At 75 bpm the cycle is 0.8 s: atria contract 0.1 s, ventricles contract 0.3 s, whole heart relaxes 0.4 s. AV valves open only toward the ventricles and arterial valves only toward the arteries, so blood flows atrium → ventricle → artery. Check “Valve failure” to show blood flowing back into the atria during ventricular contraction. The two heart sounds, lub and dub, match the AV valves closing and the arterial valves closing.',
+ 'Three vessel types: on the comparison page, tap any table column to highlight that vessel; “Simulate venous backflow” shows the venous valves closing. The microscope page simulates observing a fish tail fin: flow from trunk to branches is an artery, branches merging into a trunk is a vein, and red blood cells passing in single file mark a capillary. Experiment tips: wrap the gill cover and body in wet cotton, use low power, and finish quickly.',
+ 'Blood circulation: red is oxygenated blood, blue is deoxygenated. Tap “Systemic” or “Pulmonary” to highlight each loop; tap “Follow a Drop of Blood” and the route on the right lights up step by step. Mnemonic: start at the left ventricle, return to the right atrium (systemic); start at the right ventricle, return to the left atrium (pulmonary). The two loops run at the same time and join at the heart to form one complete circuit.',
+ 'Exchange of substances: on the left, at the alveoli, oxygen enters the blood and carbon dioxide enters the alveoli, so deoxygenated blood becomes oxygenated; on the right, at tissue cells, oxygen and nutrients enter the cells and carbon dioxide and waste enter the blood, so oxygenated blood becomes deoxygenated. Mini game on the right: sort 8 parts, with the key cases being the pulmonary artery (deoxygenated) and the pulmonary vein (oxygenated).',
+ 'Trace a pill: choose where the drug enters and where it must go, then tap “Start”. IV injection in the arm to treat tonsillitis: superior vena cava → right atrium → right ventricle → pulmonary artery → lung capillaries → pulmonary vein → left atrium → left ventricle → aorta → arteries → tonsils. It passes through the heart 2 times and reaches the right atrium first.',
+ 'Quiz: 5 common exam questions covering heart structure, blood in the pulmonary artery, fish tail fin observation, the path of an IV injection and valve states. 20 points each.',
+ 'Summary: four takeaways. Tap a card to go back to its page.'];
+function fit(){const s=Math.min(innerWidth/1600,innerHeight/900);$('stage').style.transform=`scale(${s})`;const k=clamp(s*(window.devicePixelRatio||1),1,2);if(Math.abs(k-RK)>.05||cv.width<1600){RK=k;cv.width=1600*k;cv.height=900*k;bgC=null;}}
+addEventListener('resize',fit);
+function toggleFS(){if(!document.fullscreenElement)document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();else document.exitFullscreen();}
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;if(e.key==='ArrowRight'||e.key==='PageDown')go(cur+1);else if(e.key==='ArrowLeft'||e.key==='PageUp')go(cur-1);
+ else if(e.key==='f'||e.key==='F')toggleFS();else if(e.key==='m'||e.key==='M'){SFX.setMuted(!SFX.muted);sndUI();}});
+function sndUI(){const b=$('sndBtn');b.textContent=SFX.muted?'Sound OFF':'Sound ON';b.style.color=SFX.muted?'':'var(--sig)';}
+$('sndBtn').onclick=()=>{SFX.setMuted(!SFX.muted);sndUI();};sndUI();
+function el(tag,cls,html,parent){const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;if(parent)parent.appendChild(e);return e;}
+function radio(box,sel,cb){const bs=[...box.querySelectorAll('.mb')];bs.forEach(b=>b.onclick=()=>{if(b.classList.contains('dis'))return;bs.forEach(x=>x.classList.toggle('on',x===b));cb(b);});}
+let bgC=null;
+function bg(){if(!bgC){bgC=document.createElement('canvas');bgC.width=cv.width;bgC.height=cv.height;const b=bgC.getContext('2d');b.scale(RK,RK);
+ b.fillStyle='#090709';b.fillRect(0,0,1600,900);const rg=b.createRadialGradient(540,480,0,540,480,900);rg.addColorStop(0,'rgba(110,30,50,.32)');rg.addColorStop(.6,'rgba(30,14,22,.2)');rg.addColorStop(1,'rgba(0,0,0,.6)');b.fillStyle=rg;b.fillRect(0,0,1600,900);
+ b.fillStyle='rgba(236,231,220,.05)';for(let x=40;x<1600;x+=40)for(let y=40;y<900;y+=40)b.fillRect(x-1,y-1,2,2);}
+ g.setTransform(1,0,0,1,0,0);g.drawImage(bgC,0,0);g.setTransform(RK,0,0,RK,0,0);}
+function stagePos(e){const r=cv.getBoundingClientRect();return [(e.clientX-r.left)/r.width*1600,(e.clientY-r.top)/r.height*900];}
+const PG=[];
+const BT={a:'Oxygenated blood',v:'Deoxygenated blood',n:'Valves'};
+const bTag=b=>`<small class="${b}">${BT[b]}</small>`;
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+
+/* ---------- 1 Heart Structure ---------- */
+PG[1]=(()=>{const S=HeartScene({tx:15,ty:30,sc:.92,av:.6,sl:0,flow:false});
+ let qz=null;
+ function info(id){const P=PART[id];$('h1N').innerHTML=P.n+bTag(P.b);$('h1D').innerHTML=P.d;}
+ function select(id){S.sel=id;if(id)info(id);[...$('h1Tb').tBodies[0].rows].forEach(r=>r.classList.toggle('on',r.dataset.k===id));}
+  [...$('h1Tb').tBodies[0].rows].forEach(r=>r.onclick=()=>{select(r.dataset.k);SFX.pick();});
+ const QT=['LV','RA','PA','PVs','AO','RV','LA','SVC','IVC','TV','PVv'];
+ function qNext(){if(qz.i>=qz.L.length){$('h1T').textContent='All Done ✓';$('h1S').textContent=`${qz.ok} / ${qz.L.length}`;SFX.win();return;}$('h1T').textContent=PART[qz.L[qz.i]].n;$('h1S').textContent=`${qz.ok} / ${qz.i}`;}
+ function quiz(on){qz=on?{L:shuffle(QT.slice()).slice(0,8),i:0,ok:0}:null;S.quiz=on;S.sel=null;$('h1Bar').style.display=on?'flex':'none';$('h1Q').textContent=on?'Exit Quiz':'Quiz Me: Find the Part ▶';$('h1Q').classList.toggle('go',!on);if(on)qNext();}
+  $('h1Q').onclick=()=>quiz(!qz);
+  $('h1Lab').onclick=()=>{S.labels=!S.labels;$('h1Lab').classList.toggle('on',S.labels);};
+  $('h1Wall').onclick=()=>{S.wall=!S.wall;$('h1Wall').classList.toggle('on',S.wall);if(S.wall)select('LV');SFX.blip();};
+ return {S,select,quiz,enter(){},update:dt=>S.update(dt),draw:(g,t)=>S.draw(g,t),
+ down(p){const id=S.pick(p[0],p[1]);if(!id)return false;
+ if(qz&&qz.i<qz.L.length){const T=qz.L[qz.i],ok=PART[id]===PART[T];S.sel=id;info(id);if(ok){qz.ok++;SFX.win();}else{SFX.wrong();$('h1D').innerHTML=`You tapped the <b>${PART[id].n}</b>. Now find the <b>${PART[T].n}</b>.`;}
+ qz.i++;later(700,()=>{if(qz)qNext();});return true;}
+ select(id);SFX.pick();return true;},
+ move(p){S.hov=S.pick(p[0],p[1]);return !!S.hov;}};})();
+
+/* ---------- 2 How It Works ---------- */
+const PH=[['Atria contract','open','close','Atrium → ventricle'],['Ventricles contract','close','open','Ventricle → artery'],['Whole heart relaxes','open','close','Vein → atrium → ventricle']];
+PG[2]=(()=>{const S=HeartScene({tx:48,ty:34,sc:.86});let u=.6,spd=.5,play=true,bpm=75,broken=false,lastPh=2;
+ PH.forEach((r,i)=>{const tr=el('tr',null,r.map((c,j)=>`<td class="${j>0&&j<3?(c==='open'?'o':'c'):''}">${c}</td>`).join(''),$('h2T'));tr.onclick=()=>freeze(i);});
+ function freeze(i){u=[.07,.3,.75][i];play=false;btn();SFX.blip();}
+ function btn(){$('h2P').textContent=play?'Pause ❚❚':'Play ▶';}
+  $('h2P').onclick=()=>{play=!play;btn();};
+ radio($('h2Sp'),null,b=>{spd=+b.dataset.v;play=true;btn();});
+ const rv=$('h2R');function cyc_(){const T=60/bpm;$('h2Rv').textContent=bpm+' bpm';$('h2C').innerHTML=`Cardiac cycle <b>${T.toFixed(2)} s</b>: atria contract ${(T*.125).toFixed(2)} s · ventricles contract ${(T*.375).toFixed(2)} s · whole heart relaxes ${(T*.5).toFixed(2)} s`;}
+ rv.oninput=()=>{bpm=+rv.value;cyc_();SFX.tick();};cyc_();
+  $('h2B').onclick=()=>{broken=!broken;$('h2B').classList.toggle('on',broken);SFX.blip();};
+ let c={ph:2};
+ return {S,setU:x=>{u=x;},setSpd:x=>{spd=x;},setBroken:b=>{broken=b;$('h2B').classList.toggle('on',b);},get u(){return u;},enter(){},
+ update(dt){S.update(dt);if(play)u=(u+dt*spd/(60/bpm))%1;c=pump(S,u,dt,broken);
+ if(c.ph!==lastPh){if(play&&c.ph===1)SFX.beat(0);if(play&&c.ph===2)SFX.beat(1);lastPh=c.ph;}
+      [...$('h2T').children].forEach((tr,i)=>tr.classList.toggle('on',i===c.ph));},
+ draw(g,t){S.draw(g,t);
+ const x0=90,x1=970,y=846,W=x1-x0,seg=[[0,.125,'Atria contract',AMB],[.125,.5,'Ventricles contract',RED],[.5,1,'Whole heart relaxes',CYAN]];
+ seg.forEach(([a,b,n,col],i)=>{g.save();g.globalAlpha=c.ph===i?1:.35;g.fillStyle=col;rr(g,x0+a*W+2,y-7,(b-a)*W-4,14,7);g.fill();g.restore();txt(g,n,x0+(a+b)/2*W,y-24,{f:`800 16px ${FONT}`,c:c.ph===i?col:'rgba(236,231,220,.5)'});});
+ g.save();g.fillStyle='#fff';g.shadowColor='#fff';g.shadowBlur=12;g.beginPath();g.arc(x0+u*W,y,9,0,7);g.fill();g.restore();
+ const D=['Atria contract: AV valves open, blood is pushed into the ventricles','Ventricles contract: AV valves close, arterial valves open, blood is pumped into the arteries','Whole heart relaxes: arterial valves close, blood from the veins flows back into the atria and ventricles'][c.ph];
+ txt(g,broken&&c.ph===1?'Valve failure: blood flows back into the atria when the ventricles contract!':D,530,790,{f:`900 24px ${FONT}`,c:broken&&c.ph===1?AMB:[AMB,RED,CYAN][c.ph],glow:10});}};})();
+
+/* ---------- 3 Three Vessel Types ---------- */
+PG[3]=(()=>{const S=VesselScene();
+ const tb=$('v3Tb');function col(i){S.col=S.col===i?-1:i;[...tb.rows].forEach(r=>[...r.cells].forEach((c,j)=>{c.style.background=S.col>=0&&j===S.col+1?'rgba(255,59,82,.14)':'';c.style.color=S.col>=0&&j===S.col+1?'var(--bone)':'';}));SFX.blip();}
+ tb.addEventListener('click',e=>{const c=e.target.closest('td,th');if(c&&c.cellIndex>0)col(c.cellIndex-1);});
+  $('v3Back').onclick=()=>{S.backT=2.4;SFX.whoosh();};
+ function tab(t){S.tab=t;$('v3X').style.display=t==='x'?'flex':'none';$('v3M').style.display=t==='m'?'flex':'none';$('v3H').innerHTML=t==='x'?'Tap a column to see how the three vessels differ':'Tap a <b>vessel</b>: check flow direction and how red blood cells pass';}
+ radio($('v3Tab'),null,b=>{tab(b.dataset.t);SFX.whoosh();});
+ function pick(v){S.sel=v;if(!v)return;S.known.add(v.id);const I=MINFO[v.k];$('v3N').innerHTML=I[0]+`<small class="${v.k==='a'?'a':v.k==='v'?'v':'n'}">${v.k==='a'?'Fastest flow':v.k==='v'?'Slower flow':'Slowest flow'}</small>`;$('v3D').innerHTML=I[1];}
+  $('v3All').onclick=()=>{MVS.forEach(v=>S.known.add(v.id));SFX.color();};$('v3Clr').onclick=()=>{S.known.clear();S.sel=null;$('v3N').textContent='Tap a vessel';};
+ return {S,tab,pick,col,setTab:t=>{$('v3Tab').querySelector(`[data-t="${t}"]`).click();},enter(){},update:dt=>S.update(dt),draw:(g,t)=>S.draw(g,t),
+ down(p){if(S.tab!=='m')return false;const v=S.pickM(p[0],p[1]);if(!v)return false;pick(v);SFX.pick();return true;},
+ move(p){if(S.tab!=='m')return false;S.hov=S.pickM(p[0],p[1]);return !!S.hov;}};})();
+
+/* ---------- 4 Blood Circulation ---------- */
+const CH_S=[['LV','Left ventricle'],['AO','Aorta'],['ART','Arteries'],['CAP','Body capillaries'],['VEIN','Veins'],['VC','Superior and inferior vena cava'],['RA','Right atrium']],CH_P=[['RV','Right ventricle'],['PA','Pulmonary artery'],['CL','Lung capillaries'],['PV','Pulmonary vein'],['LA','Left atrium']];
+const SEG2CH={LV:['LV'],AO:['AO'],AOu:['AO','ART'],AOd:['AO','ART'],CU:['CAP'],CD:['CAP'],SVC:['VEIN','VC'],IVC:['VEIN','VC'],RA:['RA'],RV:['RV'],PA:['PA'],CL:['CL'],PV:['PV'],LA:['LA']};
+const CH2SEG={LV:'LV',AO:'AO',ART:'AOu',CAP:'CU',VEIN:'SVC',VC:'SVC',RA:'RA',RV:'RV',PA:'PA',CL:'CL',PV:'PV',LA:'LA'};
+const oxTag=k=>{const o=CS[k].o;return o===1?bTag('a'):o===0?bTag('v'):o==='dn'?'<small class="a">Oxygenated blood</small><small class="v">→ Deoxygenated blood</small>':'<small class="v">Deoxygenated blood</small><small class="a">→ Oxygenated blood</small>';};
+PG[4]=(()=>{const S=CircScene();const chip={};
+  [[CH_S,$('c4S')],[CH_P,$('c4P')]].forEach(([L,box])=>L.forEach(([id,n],i)=>{if(i)el('i',null,'→',box);const s=el('span',null,n,box);s.onclick=()=>{select(CH2SEG[id]);SFX.pick();};chip[id]=s;}));
+ function light(ids,on=true){ids.forEach(i=>chip[i]&&chip[i].classList.toggle('on',on));}
+ function select(k){S.sel=k;if(!k)return;$('c4N').innerHTML=CS[k].n+oxTag(k);$('c4D').innerHTML=SINFO[k];}
+ radio($('c4M'),null,b=>{S.mode=b.dataset.m;S.sel=null;SFX.whoosh();Object.values(chip).forEach(c=>c.classList.remove('on'));if(S.mode!=='all')light((S.mode==='sys'?CH_S:CH_P).map(x=>x[0]));});
+ function trace(spd=1){Object.values(chip).forEach(c=>c.classList.remove('on'));S.trace(croute('LV',0,'LV',0),(k)=>{if(k){light(SEG2CH[k]);SFX.tick();}else SFX.hit(1);},spd);SFX.whoosh();}
+  $('c4Go').onclick=()=>trace(1.6);
+ return {S,select,trace,setMode:m=>$('c4M').querySelector(`[data-m="${m}"]`).click(),enter(){},update:dt=>S.update(dt),draw:(g,t)=>S.draw(g,t),
+ down(p){const k=S.pick(p[0],p[1]);if(!k)return false;select(k);SFX.pick();return true;},move(p){S.hov=S.pick(p[0],p[1]);return !!S.hov;}};})();
+
+/* ---------- 5 exchange of substances ---------- */
+PG[5]=(()=>{const S=ExchScene();
+ const IT=[['Aorta','a'],['Pulmonary artery','v'],['Pulmonary vein','a'],['Superior vena cava','v'],['Left atrium','a'],['Right atrium','v'],['Left ventricle','a'],['Right ventricle','v']];let st=IT.map(()=>0);
+ const bs=IT.map(([n],i)=>{const b=el('button','mb',n,$('e5G'));b.onclick=()=>{st[i]=(st[i]+1)%3;paint();SFX.blip();};return b;});
+ function paint(chk){bs.forEach((b,i)=>{b.className='mb'+(st[i]===1?' a':st[i]===2?' v':'')+(chk?(st[i]===(IT[i][1]==='a'?1:2)?' ok':' bad'):'');b.textContent=IT[i][0]+(st[i]===1?' · O2-rich':st[i]===2?' · O2-poor':'');});}
+  $('e5C').onclick=()=>{const n=st.filter((s,i)=>s===(IT[i][1]==='a'?1:2)).length;paint(true);$('e5V').innerHTML=n===8?'<b style="color:var(--ok)">All correct!</b>':`Correct ${n} / 8 · Rethink the orange ones`;n===8?SFX.win():SFX.wrong();};
+  $('e5R').onclick=()=>{st=IT.map(()=>0);paint();$('e5V').textContent='';};
+ paint();
+ return {S,enter(){},update:dt=>S.update(dt),draw:(g,t)=>S.draw(g,t)};})();
+
+/* ---------- 6 Trace a Pill ---------- */
+const ROUTE_NM={SVC:'Superior vena cava',IVC:'Inferior vena cava',RA:'Right atrium',RV:'Right ventricle',PA:'Pulmonary artery',CL:'Lung capillaries',PV:'Pulmonary vein',LA:'Left atrium',LV:'Left ventricle',AO:'Aorta',AOu:'Aorta',AOd:'Aorta'};
+const FROM={arm:{m:'arm',k:'SVC',first:'Arm vein'},gut:{m:'gut',k:'CD',first:'Small intestine capillaries'},lung:{m:'lung',k:'CL',first:'Alveoli → lung capillaries'}};
+const TO={ton:{m:'ton',k:'CU',n:'Tonsil capillaries'},foot:{m:'foot',k:'CD',n:'Foot capillaries'},lung:{m:'lung',k:'CL',n:'Lung capillaries (infection site)'}};
+function routeNames(R,f,t){return R.map((r,i)=>{const k=r.k,last=i===R.length-1;
+ if(i===0)return f==='gut'?[FROM.gut.first,'Veins']:f==='arm'?[FROM.arm.first,'Superior vena cava']:[FROM.lung.first];
+ if(last)return k==='CL'?[TO[t].n]:['Arteries',TO[t].n];
+ if(k==='CU'||k==='CD')return ['Arteries','Capillaries','Veins'];
+ if(k==='AOu'||k==='AOd')return [];
+ return [ROUTE_NM[k]];});}
+PG[6]=(()=>{const S=CircScene({N:110,spd:.8});let f='arm',t='ton';
+ function marks(){S.marks=[FROM[f].m,TO[t].m];if(f==='lung'&&t==='lung')S.marks=['lung'];}
+ function sync(){const lb=$('t6T').querySelector('[data-t="lung"]');lb.classList.toggle('dis',f==='lung');if(f==='lung'&&t==='lung'){t='ton';[...$('t6T').querySelectorAll('.mb[data-t]')].forEach(b=>b.classList.toggle('on',b.dataset.t==='ton'));}marks();}
+ radio($('t6F'),null,b=>{f=b.dataset.f;sync();reset();SFX.blip();});
+  [...$('t6T').querySelectorAll('.mb[data-t]')].forEach(b=>b.onclick=()=>{if(b.classList.contains('dis'))return;t=b.dataset.t;[...$('t6T').querySelectorAll('.mb[data-t]')].forEach(x=>x.classList.toggle('on',x===b));marks();reset();SFX.blip();});
+ function reset(){S.tr=null;$('t6L').innerHTML='';$('t6A').textContent='—';$('t6B').textContent='—';}
+ function run(spd=1){reset();const F=FROM[f],T=TO[t],M=MARKS[F.m],R=croute(F.k,mkD(M),T.k,mkD(MARKS[T.m])),NM=routeNames(R,f,t);let first=null,pass=0;
+ S.trace(R,(k,i)=>{if(k===null){$('t6B').textContent=pass+' times';SFX.win();return;}
+ if((k==='RA'||k==='LA')){pass++;if(!first){first=CS[k].n;$('t6A').textContent=first;SFX.hit(0);}}
+ NM[i].forEach(n=>{if($('t6L').children.length)el('i',null,'→',$('t6L'));el('span','on',n,$('t6L'));});SFX.tick();},spd);SFX.whoosh();}
+  $('t6Go').onclick=()=>run(1.7);
+ marks();
+ return {S,run,set(a,b){$('t6F').querySelector(`[data-f="${a}"]`).click();const x=$('t6T').querySelector(`[data-t="${b}"]`);x&&x.onclick();},enter(){},update:dt=>S.update(dt),draw:(g,t)=>S.draw(g,t)};})();
+
+/* ---------- 7 Quiz ---------- */
+const QZ=PG[7]=(()=>{
+ const q0=HeartScene({tx:15,ty:30,sc:.92,av:.6,flow:false});
+ const q1=CircScene({N:120});
+ const q2=VesselScene({tab:'m'});
+ const q3=CircScene({N:90,spd:.8,marks:['arm','ton']});
+ const q4=HeartScene({tx:48,ty:34,sc:.86,labels:true});let u4=.6,frz=false;
+ const LV=[
+   {q:'Which of the heart’s four chambers has <b>the thickest wall</b>?',o:['Left ventricle','Right ventricle','Left atrium','Right atrium'],a:0,x:'The left ventricle pumps blood to the <b>whole body</b>, the longest trip, so its muscle is the strongest and its wall the thickest.',S:q0,show:()=>{q0.wall=true;q0.sel='LV';},reset:()=>{q0.wall=false;q0.sel=null;}},
+   {q:'<b>Pulmonary artery</b> carries which blood?',o:['Deoxygenated blood','Oxygenated blood','A mix of oxygenated and deoxygenated blood'],a:0,x:'The pulmonary artery leaves the right ventricle and carries <b>low-oxygen</b> blood to the lungs: it is called an artery, yet it carries <b>Deoxygenated blood</b>. ',S:q1,show:()=>{q1.sel='PA';},reset:()=>{q1.sel=null;}},
+   {q:'Viewing a fish tail fin under a microscope, red blood cells go <b>single-file</b> through which vessel?',o:['Capillaries','arteries','veins'],a:0,x:'Capillaries have the narrowest lumen and let red blood cells go <b>single-file</b>; blood flows slowest, which suits exchange of substances.',S:q2,show:()=>{['c1','c2','c3'].forEach(i=>q2.known.add(i));q2.sel=MVS[3];},reset:()=>{q2.known.clear();q2.sel=null;}},
+   {q:'For tonsillitis, an <b>IV injection in the arm</b> of medicine: which heart chamber does the drug reach first?',o:['Right atrium','Left atrium','Right ventricle','Left ventricle'],a:0,x:'Arm vein →  <b>Superior vena cava</b> → <b>Right atrium</b>. Then it goes around the pulmonary loop and is carried by the aorta to the tonsils.',S:q3,
+ show:()=>{q3.trace(croute('SVC',4,'CU',mkD(MARKS.ton)),null,2.2);},reset:()=>{q3.tr=null;}},
+   {q:'When the ventricles contract and blood flows into the arteries, what is the state of the valves?',o:['AV valves closed, arterial valves open','AV valves open, arterial valves closed','Both valves open','Both valves closed'],a:0,x:'AV valve<b>close</b>, preventing blood from flowing back into the atria; the arterial valves <b>open</b>, letting blood into the arteries.',S:q4,show:()=>{frz=true;u4=.3;q4.sel='TV';},reset:()=>{frz=false;q4.sel=null;}}];
+ let li=0,sc=0,ans=LV.map(()=>null),order=LV.map(L=>L.o.map((_,i)=>i));
+ const lv=$('gLv');LV.forEach((_,i)=>{const b=el('button','lv',String(i+1).padStart(2,'0'),lv);b.onclick=()=>load(i);});
+ function paint(){[...lv.children].forEach((b,k)=>b.className='lv'+(k===li?' on':'')+(ans[k]===true?' ok':ans[k]===false?' bad':''));$('gSc').textContent=sc;}
+ function load(i){li=i;GEN++;const L=LV[i];$('gQ').innerHTML=L.q;const o=$('gOpts');o.innerHTML='';
+ if(ans[i]==null){order[i]=shuffle(L.o.map((_,k)=>k));}
+ order[i].forEach(k=>{const b=el('button','mb opt',L.o[k],o);b.dataset.k=k;b.onclick=()=>answer(k);if(ans[i]!=null&&k===L.a)b.classList.add('ok');});
+    $('gX').className='qx'+(ans[i]!=null?' on':'');$('gX').innerHTML=L.x;if(ans[i]!=null)L.show();else L.reset();$('gNext').classList.toggle('dis',ans[i]==null);paint();}
+ function answer(k){if(ans[li]!=null)return;const L=LV[li],ok=k===L.a;ans[li]=ok;if(ok)sc+=20;
+    $('gOpts').querySelectorAll('.mb').forEach(b=>{const kk=+b.dataset.k;if(kk===L.a)b.classList.add('ok');else if(kk===k)b.classList.add('bad');});
+ L.show();$('gX').className='qx on';const v=$('gV');v.className='verdict on'+(ok?'':' bad');v.querySelector('.w').textContent=ok?'PERFECT':'MISS';v.querySelector('.s').textContent=ok?'+20':'See Explanation';
+ ok?SFX.win():SFX.wrong();later(1300,()=>v.className='verdict'+(ok?'':' bad'));paint();$('gNext').classList.remove('dis');if(ans.every(x=>x!=null))later(1700,debrief);}
+ function debrief(){const n=ans.filter(Boolean).length;$('gG').textContent=n===5?'S':n>=4?'A':n>=3?'B':'C';$('gT').textContent=`Correct ${n} / 5 · Score ${sc}`;$('gD').classList.add('on');SFX.win();}
+ function restart(){ans=LV.map(()=>null);sc=0;$('gD').classList.remove('on');load(0);}
+  $('gNext').onclick=()=>{const nx=ans.findIndex(x=>x==null);if(nx>=0)load(nx);else debrief();};$('gRe').onclick=restart;
+ return {LV,restart,load,answer:k=>answer(k),get li(){return li;},enter(){$('gD').classList.remove('on');const nx=ans.findIndex(x=>x==null);load(nx<0?0:nx);},
+ update(dt){const S=LV[li].S;S.update(dt);if(li===4){if(!frz)u4=(u4+dt*.35/.8)%1;pump(q4,u4,dt,false);}},
+ draw(g,t){LV[li].S.draw(g,t);}};})();
+
+/* ---------- 8 Summary ---------- */
+PG[8]=(()=>{const a=HeartScene({labels:true,av:.6,flow:false}),b=HeartScene({labels:false}),c=VesselScene({tab:'m'}),d=CircScene({N:120,showLab:false});let u=0;
+ MVS.forEach(v=>c.known.add(v.id));
+ const TW=(1488-54)/4;const box=i=>[56+i*(TW+18),170,TW,320];
+ const fitIn=(g,i,bb,f)=>{const [x,y,w,h]=box(i),[x0,y0,x1,y1]=bb,s=Math.min((w-20)/(x1-x0),(h-44)/(y1-y0));g.save();g.beginPath();g.rect(x+1,y+1,w-2,h);g.clip();g.translate(x+w/2-(x0+x1)/2*s,y+34+(h-44)/2-(y0+y1)/2*s);g.scale(s,s);f();g.restore();};
+ return {enter(){},update(dt){u=(u+dt*.5/.8)%1;pump(b,u,dt,false);c.update(dt);d.update(dt);},
+ draw(g,t){fitIn(g,0,[140,95,1010,870],()=>a.draw(g,t));fitIn(g,1,[180,95,960,870],()=>b.draw(g,t));fitIn(g,2,[230,165,866,795],()=>c.draw(g,t));fitIn(g,3,[150,120,930,860],()=>d.draw(g,t));}};})();
+
+/* ---------- 0 Cover ---------- */
+PG[0]=(()=>{const S=HeartScene({tx:772,ty:70,sc:.8,labels:false});let u=0;
+ return {S,enter(){},update(dt){u=(u+dt*.55/.8)%1;pump(S,u,dt,false);S.update(dt);},draw(g,t){S.draw(g,t);}};})();
+
+/* ---------- Pointer ---------- */
+let hold=null;
+cv.addEventListener('pointerdown',e=>{const P=PG[cur];if(!P||!P.down)return;const p=stagePos(e);if(P.down(p)){hold=P;cv.setPointerCapture(e.pointerId);e.preventDefault();}});
+cv.addEventListener('pointermove',e=>{const P=PG[cur];if(!P||!P.move)return;const p=stagePos(e);cv.style.cursor=P.move(p)?'pointer':'default';});
+cv.addEventListener('pointerup',()=>{if(hold&&hold.up)hold.up();hold=null;});
+
+/* ---------- Page turning ---------- */
+function go(i){i=clamp(i,0,slides.length-1);if(i===cur)return;if(cur>=0)SFX.page();GEN++;hold=null;
+ slides.forEach((s,k)=>s.classList.toggle('on',k===i));cur=i;
+  $('pbar').style.width=((i+1)/slides.length*100)+'%';$('pg').innerHTML=`<b>${String(i+1).padStart(2,'0')}</b> / ${String(slides.length).padStart(2,'0')}`;
+  $('notesTxt').textContent=NOTES[i];try{history.replaceState(null,'','#'+(i+1));}catch(e){}
+ cv.style.opacity=i===8?.92:1;PG[i]&&PG[i].enter&&PG[i].enter();}
+let lastNow=performance.now();
+function frame(){const now=performance.now();const dt=Math.min(.05,Math.max(0,(now-lastNow)/1000));lastNow=now;const t=now/1000;
+ bg();const P=PG[cur];if(P){P.update(dt,t);P.draw(g,t);}requestAnimationFrame(frame);}
+fit();
+go(clamp((parseInt(location.hash.slice(1))||1)-1,0,slides.length-1));
+requestAnimationFrame(frame);
+
+</script>
+<!-- LivePage badge: web only, hidden inside the LivePage app -->
+<script id="lp-get-app">(function(){var w=window.webkit;if(w&&w.messageHandlers&&w.messageHandlers.lp)return;function add(){if(document.getElementById("lp-badge"))return;var a=document.createElement("a");a.id="lp-badge";a.href="https://apps.apple.com/app/id6837615778";a.target="_blank";a.rel="noopener";a.textContent="Made with LivePage · Get the app";a.style.cssText="position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:2147483647;font:600 11px/1 -apple-system,system-ui,sans-serif;letter-spacing:.04em;color:#f3efe6;background:rgba(12,14,20,.78);border:1px solid rgba(255,255,255,.16);padding:7px 11px;border-radius:99px;text-decoration:none;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)";document.body.appendChild(a);}if(document.body)add();else addEventListener("DOMContentLoaded",add);})();</script>
+</body>
+</html>

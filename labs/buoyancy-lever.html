@@ -1,0 +1,731 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Buoyancy and Levers · Grade 8 Physics Lab</title>
+<style>
+:root{
+  --ink:#0a0d12; --plate:rgba(10,13,18,.82);
+  --bone:#ece7dc; --dim:rgba(236,231,220,.62); --faint:rgba(236,231,220,.24); --line:rgba(236,231,220,.14);
+  --sig:#ff3b52; --amb:#ffb347; --cyan:#3ee0ff; --ok:#45e39a;
+  --disp:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --serif:"Songti SC","STSong","Noto Serif SC","SimSun",serif;
+  --num:"DIN Alternate","DIN Condensed","Bahnschrift","Arial Narrow",Arial,sans-serif;
+  --mono:"SF Mono",Menlo,Consolas,"Courier New",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#050608}
+#viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+#stage{width:1600px;height:900px;flex:none;position:relative;overflow:hidden;color:var(--bone);font-family:var(--disp);background:#07090d;user-select:none;-webkit-user-select:none}
+button{font-family:inherit;color:inherit}
+#cv{position:absolute;left:0;top:0;width:1600px;height:900px;display:block;touch-action:none;transition:opacity .5s}
+.pbar{position:absolute;left:0;top:0;height:3px;background:var(--sig);box-shadow:0 0 12px var(--sig);transition:width .5s;z-index:30}
+.topr{position:absolute;right:40px;top:24px;display:flex;gap:10px;z-index:30}
+.ib{height:36px;padding:0 14px;border:1px solid var(--line);background:rgba(10,13,18,.6);border-radius:4px;font:600 13px var(--mono);letter-spacing:.12em;color:var(--dim);cursor:pointer;backdrop-filter:blur(6px)}
+.ib:hover{color:var(--bone);border-color:var(--faint)}
+.navr{position:absolute;right:40px;bottom:26px;display:flex;align-items:center;gap:14px;z-index:30}
+.navr .pg{font:500 15px var(--mono);letter-spacing:.2em;color:var(--dim)}
+.navr .pg b{color:var(--bone)}
+.arr{width:50px;height:50px;border:1px solid var(--faint);background:rgba(10,13,18,.6);border-radius:50%;font-size:22px;cursor:pointer;display:grid;place-items:center}
+.arr:hover{border-color:var(--sig);color:var(--sig);box-shadow:0 0 18px rgba(255,59,82,.35)}
+.slide{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity .5s,visibility .5s;pointer-events:none;z-index:5}
+.slide.on{opacity:1;visibility:visible}
+.slide .ui{pointer-events:auto}
+.eyebrow{display:flex;align-items:center;gap:14px;font:600 14px var(--mono);letter-spacing:.28em;color:var(--dim)}
+.tagx{font:800 15px var(--disp);letter-spacing:.1em;color:#fff;background:var(--sig);padding:5px 10px 4px}
+.hud-tl{position:absolute;left:56px;top:38px}
+.hud-tl h2{font:800 46px/1.12 var(--disp);letter-spacing:.04em;margin-top:12px;text-shadow:0 2px 24px rgba(0,0,0,.8)}
+.hud-tl h2 em{font-style:normal;color:var(--sig);text-shadow:0 0 30px rgba(255,59,82,.5)}
+.hint{position:absolute;left:56px;bottom:32px;font:600 16px var(--disp);color:var(--dim);letter-spacing:.08em}
+.hint b{color:var(--sig)}.hint u{text-decoration:none;color:var(--cyan)}
+/* Right panel */
+.side{position:absolute;right:40px;top:84px;bottom:96px;width:520px;padding:18px 24px;background:var(--plate);border:1px solid var(--line);border-top:3px solid var(--sig);backdrop-filter:blur(8px);display:flex;flex-direction:column;gap:12px}
+.k{font:600 12px var(--mono);letter-spacing:.28em;color:var(--dim)}
+.rdv{font:800 44px/1.1 var(--num);letter-spacing:.01em;white-space:nowrap}
+.rdv .lb{font:800 30px var(--disp);color:var(--sig);letter-spacing:.02em}
+.mn{font:600 19px var(--disp);color:var(--dim);display:flex;align-items:baseline;gap:10px}
+.mn b{font:700 28px var(--num);color:var(--ok)}
+.mn i{font-style:normal;font-size:16px;color:var(--dim)}.mn i.okx{color:var(--ok)}
+.gcap{display:flex;justify-content:space-between;font:600 12px var(--mono);letter-spacing:.2em;color:var(--dim);margin-bottom:5px}
+.gr{width:472px;height:110px;display:block;border:1px solid var(--line);background:rgba(255,255,255,.02)}
+.steps{list-style:none;display:flex;flex-direction:column;gap:6px;counter-reset:st}
+.steps li{position:relative;padding:6px 10px 6px 42px;font:600 17px/1.45 var(--disp);color:rgba(236,231,220,.34);border:1px solid transparent;transition:all .3s}
+.steps li::before{counter-increment:st;content:counter(st);position:absolute;left:8px;top:7px;width:24px;height:24px;border-radius:50%;border:1px solid currentColor;font:700 14px/22px var(--num);text-align:center}
+.steps li.done{color:var(--bone)}
+.steps li.done::before{background:var(--amb);border-color:var(--amb);color:var(--ink)}
+.steps li.next{border-color:rgba(255,179,71,.4);color:rgba(236,231,220,.72)}
+.rowx{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.xl{font:600 15px var(--disp);color:var(--dim);margin-right:4px}
+.mb{height:38px;padding:0 14px;border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:4px;font:600 16px var(--disp);color:var(--dim);cursor:pointer;display:flex;align-items:center;gap:7px}
+.mb:hover{color:var(--bone);border-color:var(--faint)}
+.mb:disabled{opacity:.35;cursor:default}
+.mb.on{color:#fff;border-color:rgba(255,59,82,.7);background:rgba(255,59,82,.16);box-shadow:0 0 14px rgba(255,59,82,.2)}
+.mb.go{color:#fff;background:var(--sig);border-color:var(--sig);font-weight:800;box-shadow:0 0 22px rgba(255,59,82,.4)}
+.mb.go:hover{background:#ff5a6e}
+.kj{margin-top:auto;padding:11px 16px;border-left:3px solid var(--amb);background:rgba(255,179,71,.07);font:600 20px/1.4 var(--disp);color:var(--dim)}
+.kj b{color:var(--amb)}
+/* Title */
+.t-wrap{position:absolute;left:80px;top:130px;width:820px}
+.t-word{font:900 160px/1 var(--serif);letter-spacing:.04em;white-space:nowrap;margin:18px 0 26px -6px;background:linear-gradient(180deg,#fff 0%,#e9e2d2 60%,#b9b09d 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 6px 40px rgba(0,0,0,.7))}
+.t-word span{background:linear-gradient(180deg,#ffd0d6,#ff3b52 60%,#c4122a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 30px rgba(255,59,82,.6))}
+.t-prem{position:relative;padding-top:18px;border-top:1px solid var(--line);font:600 27px var(--disp);color:rgba(236,231,220,.92);letter-spacing:.08em;max-width:760px;text-shadow:0 1px 12px #000}
+.t-prem::before{content:"";position:absolute;left:0;top:-2px;width:90px;height:3px;background:var(--sig)}
+.t-prem i{font-style:normal;color:var(--sig)}
+.t-chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px;max-width:760px}
+.t-chips button{height:42px;padding:0 16px;border:1px solid var(--line);background:rgba(10,13,18,.6);font:700 18px var(--disp);color:var(--dim);cursor:pointer;display:flex;align-items:center;gap:8px}
+.t-chips button b{font:700 14px var(--num);color:var(--sig)}
+.t-chips button:hover{color:var(--bone);border-color:var(--sig)}
+.t-act{display:flex;gap:14px;margin-top:30px}
+.cta{height:58px;padding:0 28px;font:800 21px var(--disp);letter-spacing:.1em;border:0;background:var(--sig);color:#fff;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:0 0 30px rgba(255,59,82,.4)}
+.cta:hover{background:#ff5a6e}
+.cta.sec{background:rgba(10,13,18,.6);border:1px solid var(--faint);box-shadow:none}
+.cta.sec:hover{border-color:var(--bone)}
+/* Challenge */
+.lvl{display:flex;gap:6px}
+.lv{width:48px;height:42px;border:1px solid var(--line);background:rgba(255,255,255,.03);font:700 18px var(--num);cursor:pointer;color:var(--dim)}
+.lv.on{border-color:var(--bone);color:var(--bone)}
+.lv.ok{background:var(--ok);border-color:var(--ok);color:var(--ink)}
+.q{font:700 24px/1.5 var(--disp);color:var(--bone)}
+.q b{color:var(--amb)}
+.fb{font:600 19px/1.55 var(--disp);color:var(--dim);min-height:60px}
+.fb.ok{color:var(--ok)}.fb.no{color:var(--sig)}
+.fb small{display:block;color:var(--amb);font-size:17px;margin-top:4px}
+.prog{font:700 15px var(--mono);letter-spacing:.2em;color:var(--dim);display:flex;align-items:baseline;gap:8px}
+.prog b{font:700 34px var(--num);color:var(--ok);letter-spacing:0}
+.verdict{position:absolute;left:520px;top:440px;transform:translate(-50%,-50%) scale(1.6);opacity:0;pointer-events:none;transition:all .4s cubic-bezier(.2,1.5,.4,1);text-align:center;z-index:9}
+.verdict.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.verdict .w{font:900 120px/1 var(--num);letter-spacing:.08em;color:var(--ok);text-shadow:0 0 50px rgba(69,227,154,.6)}
+.verdict .s{font:700 24px var(--disp);letter-spacing:.3em;margin-top:6px;text-shadow:0 1px 10px #000}
+.shake{animation:shk .4s}
+@keyframes shk{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+/* Summary */
+.tiles{position:absolute;left:56px;right:40px;top:166px;bottom:100px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;gap:16px}
+.tile{border:1px solid var(--line);background:rgba(10,13,18,.85);backdrop-filter:blur(8px);padding:14px 18px;display:grid;grid-template-columns:250px 1fr;grid-template-rows:auto 1fr;gap:6px 16px;opacity:0;transform:translateY(24px);transition:all .6s;cursor:pointer}
+.tile:hover{border-color:var(--faint)}
+.slide.on .tile{opacity:1;transform:none}
+.tile .n{grid-column:1/-1;font:600 13px var(--mono);letter-spacing:.3em;color:var(--dim)}
+.tile canvas{width:250px;height:190px;align-self:center}
+.tile .h{font:900 30px/1.2 var(--serif);letter-spacing:.04em}
+.tile .h i{font-style:normal;color:var(--sig)}
+.tile .fm{font:700 18px/1.5 var(--disp);color:var(--amb);margin-top:8px}
+.tile .d{font:500 15px/1.6 var(--disp);color:var(--dim);margin-top:8px}
+#notes{position:absolute;right:40px;top:70px;width:470px;padding:20px 22px;background:rgba(10,13,18,.97);border:1px solid var(--line);border-top:3px solid var(--cyan);font-size:17px;line-height:1.75;color:var(--bone);z-index:40;opacity:0;transform:translateY(-8px);pointer-events:none;transition:all .3s}
+#notes.show{opacity:1;transform:none;pointer-events:auto}
+#notes h4{font:600 12px var(--mono);letter-spacing:.3em;color:var(--cyan);margin-bottom:8px}
+
+.rdv small{font:700 22px var(--disp);color:var(--dim)}
+.rdv.st{font:900 42px/1.15 var(--disp);letter-spacing:.06em}
+.tb{display:grid;grid-template-columns:1fr auto;gap:4px 14px;align-items:baseline;font:600 17px var(--disp);color:var(--dim);padding:9px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.tb b{font:700 24px var(--num);color:var(--bone);text-align:right;white-space:nowrap}
+.tb b.c{color:var(--cyan)}.tb b.a{color:var(--amb)}.tb b.g{color:var(--ok)}.tb b.r{color:var(--sig)}
+.nt{font:600 17px/1.5 var(--disp);color:var(--dim);min-height:26px}
+.nt .r{color:var(--sig)}.nt .g{color:var(--ok)}.nt .c{color:var(--cyan)}
+.gcap i{font-style:normal;letter-spacing:.05em}.lgw{color:#fff}.lgc{color:var(--cyan)}.lga{color:var(--amb)}.lgg{color:var(--ok)}
+.rng{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:linear-gradient(90deg,var(--cyan),var(--amb) 45%,var(--sig));outline:none;cursor:pointer}
+.rng::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;border:4px solid var(--sig);box-shadow:0 0 14px rgba(255,59,82,.5)}
+.rng::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:4px solid var(--sig)}
+.rv{font:800 30px var(--num);min-width:76px;text-align:right}
+.lt{width:100%;border-collapse:collapse;font:600 16px var(--disp);color:var(--dim)}
+.lt th{font:600 12px var(--mono);letter-spacing:.1em;color:var(--dim);text-align:right;padding:4px 6px;border-bottom:1px solid var(--line);font-weight:600}
+.lt td{padding:4px 6px;text-align:right;font:700 22px var(--num);color:var(--bone)}
+.lt td:first-child,.lt th:first-child{text-align:left;font:600 16px var(--disp);color:var(--dim)}
+.lt tr.l1 td:last-child{color:var(--ok)}.lt tr.l2 td:last-child{color:var(--amb)}
+.lt.tr td{font-size:19px;padding:2px 6px}
+.ex{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ex div{border:1px solid var(--line);padding:8px 10px;font:600 15px/1.6 var(--disp);color:rgba(236,231,220,.38);transition:all .3s}
+.ex h5{font:800 18px var(--disp);margin-bottom:2px}
+.ex .c1.on{color:var(--bone);border-color:var(--ok);background:rgba(69,227,154,.08)}.ex .c1.on h5{color:var(--ok)}
+.ex .c2.on{color:var(--bone);border-color:var(--sig);background:rgba(255,59,82,.08)}.ex .c2.on h5{color:var(--sig)}
+.ex .c3.on{color:var(--bone);border-color:var(--amb);background:rgba(255,179,71,.08)}.ex .c3.on h5{color:var(--amb)}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+<canvas id="cv"></canvas>
+<div class="pbar" id="pbar"></div>
+<div class="topr"><button class="ib" id="sndBtn">Sound ON</button><button class="ib" onclick="$('notes').classList.toggle('show')">Teacher Notes</button><button class="ib" onclick="toggleFS()">Fullscreen ⛶</button></div>
+<div id="notes"><h4>TEACHER NOTE</h4><div id="notesTxt"></div></div>
+
+<section class="slide" data-name="TITLE">
+  <div class="t-wrap ui">
+    <div class="eyebrow"><span class="tagx">Middle School Physics</span><span>Grade 8 · Buoyancy · Simple Machines</span></div>
+    <div class="t-word">Buoyancy <span>Levers </span></div>
+    <div class="t-prem">Two labs, six tricky ideas:  <i>Drag and explore</i>, and watch the numbers and forces update live</div>
+    <div class="t-chips" id="chips"></div>
+    <div class="t-act"><button class="cta" onclick="go(1)">Start ▶</button><button class="cta sec" onclick="go(7)">Go to Challenge</button></div>
+  </div>
+</section>
+
+<section class="slide" data-name="Weighing">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">01</span><span>BUOYANCY LAB</span></div><h2>Buoyancy Lab:  <em>F_buoy = G_disp</em></h2></div>
+  <div class="side ui" id="sd1"></div><div class="hint">Drag up/down <b>block</b> to slowly lower it into the liquid · watch <u>spring scale reading</u> and the water in the bucket</div>
+</section>
+<section class="slide" data-name="Pressure Difference">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">02</span><span>PRESSURE DIFFERENCE</span></div><h2>Where Buoyancy Comes From:  <em>Pressure Difference</em></h2></div>
+  <div class="side ui" id="sd2"></div><div class="hint">Drag up/down <b>stone</b> to see the pressure on the top and bottom faces</div>
+</section>
+<section class="slide" data-name="Float or Sink ">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">03</span><span>FLOAT OR SINK</span></div><h2>Float or Sink:  <em>Compare Density</em></h2></div>
+  <div class="side ui" id="sd3"></div><div class="hint">Drag <b>block</b> to push it down / lift it up, then let go · on the right, set <u>object density</u></div>
+</section>
+<section class="slide" data-name="Lever Balance">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">04</span><span>LEVER BALANCE</span></div><h2>Lever Balance:  <em>F₁L₁ = F₂L₂</em></h2></div>
+  <div class="side ui" id="sd4"></div><div class="hint">Drag left/right <b>weight</b> to change marks · add or remove weights on the right · each weight 0.5 N, each mark 5 cm</div>
+</section>
+<section class="slide" data-name="Lever Arm">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">05</span><span>MOMENT ARM</span></div><h2>Lever Arm and  <em>Minimum Force</em></h2></div>
+  <div class="side ui" id="sd5"></div><div class="hint">Drag <b>red dot B</b> to change the point of force · drag <b>arrow tip</b> to change direction</div>
+</section>
+<section class="slide" data-name="Lever Types">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">06</span><span>THREE KINDS</span></div><h2>Saves Force or Effort:  <em>Compare Arms</em></h2></div>
+  <div class="side ui" id="sd6"></div><div class="hint">Drag left/right <b>pivot</b> · tap “Press” to see how far the hand and the stone each move</div>
+</section>
+<section class="slide" data-name="Challenge">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">07</span><span>MISSION</span></div><h2>Calculate first, then  <em>do it</em></h2></div>
+  <div class="side ui">
+    <div class="rowx" style="justify-content:space-between"><div class="lvl" id="lvls"></div><div class="prog">Passed <b id="qn">0</b> / <span id="qt">5</span></div></div>
+    <div class="k" id="qk">LEVEL 01</div><div class="q" id="qq"></div>
+    <div class="rowx" id="qx"></div>
+    <div class="rdv" id="qrd"></div>
+    <div class="fb" id="fb"></div>
+    <div class="rowx"><button class="mb go" id="lock">Lock In ✓</button><button class="mb" id="qhint">Hint</button><button class="mb" id="qre">Retry</button><button class="mb" id="qnext">Next Level →</button></div>
+  </div>
+  <div class="hint">Work out the answer on paper first, drag it into place, then tap “Lock In”</div>
+  <div class="verdict" id="verdict"><div class="w">PERFECT</div><div class="s" id="vds"></div></div>
+</section>
+<section class="slide" data-name="Summary">
+  <div class="hud-tl"><div class="eyebrow"><span class="tagx">08</span><span>DEBRIEF</span></div><h2>Six key ideas,  <em>one page to take away</em></h2></div>
+  <div class="tiles" id="tiles"></div>
+</section>
+
+<div class="navr"><span class="pg" id="pg"></span><button class="arr" onclick="go(cur-1)">‹</button><button class="arr" onclick="go(cur+1)">›</button></div>
+</div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function lerp(a,b,t){return a+(b-a)*t;}
+
+/* ================= Sound ================= */
+const SFX=(()=>{let ctx=null,master=null,muted=false,nb=null,lastT=0;
+ try{muted=localStorage.getItem('buoy_mute')==='1';}catch(e){}
+ function ac(){if(!ctx){const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;ctx=new AC();master=ctx.createGain();master.gain.value=.5;
+ const comp=ctx.createDynamicsCompressor();master.connect(comp);comp.connect(ctx.destination);
+ nb=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate);const d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;}
+ if(ctx.state==='suspended')ctx.resume();return ctx;}
+ function quiet(){return muted||(typeof cur!=='undefined'&&cur===0&&!window.__promo);}
+ function tone({f=440,f2=0,type='sine',t=0,dur=.2,vol=.2,att=.004}){if(quiet())return;const c=ac();if(!c)return;
+ const o=c.createOscillator(),g=c.createGain(),s=c.currentTime+t;o.type=type;o.frequency.setValueAtTime(f,s);if(f2)o.frequency.exponentialRampToValueAtTime(f2,s+dur);
+ g.gain.setValueAtTime(.0001,s);g.gain.linearRampToValueAtTime(vol,s+att);g.gain.exponentialRampToValueAtTime(.0001,s+dur);o.connect(g);g.connect(master);o.start(s);o.stop(s+dur+.05);}
+ function noise({t=0,dur=.2,vol=.1,f=2000,f2=0,type='bandpass',Q=1}){if(quiet())return;const c=ac();if(!c)return;
+ const src=c.createBufferSource(),fl=c.createBiquadFilter(),g=c.createGain(),s=c.currentTime+t;src.buffer=nb;src.loop=true;
+ fl.type=type;fl.Q.value=Q;fl.frequency.setValueAtTime(f,s);if(f2)fl.frequency.exponentialRampToValueAtTime(f2,s+dur);
+ g.gain.setValueAtTime(.0001,s);g.gain.linearRampToValueAtTime(vol,s+Math.min(.03,dur/3));g.gain.exponentialRampToValueAtTime(.0001,s+dur);
+ src.connect(fl);fl.connect(g);g.connect(master);src.start(s);src.stop(s+dur+.05);}
+ return {get muted(){return muted;},setMuted(m){muted=m;try{localStorage.setItem('buoy_mute',m?'1':'0');}catch(e){}if(!m){ac();this.click();}},unlock(){ac();},
+ click(){tone({f:1100,f2:700,type:'triangle',dur:.05,vol:.06});},
+ tick(){const n=performance.now();if(n-lastT<45)return;lastT=n;tone({f:3000,type:'square',dur:.015,vol:.015});},
+ pick(){tone({f:2637,type:'sine',dur:.25,vol:.06});tone({f:3951,type:'sine',dur:.16,vol:.025});},
+ drop(){tone({f:200,f2:90,type:'sine',dur:.14,vol:.22});noise({dur:.06,vol:.1,f:600,type:'lowpass'});},
+ blip(){tone({f:1300,f2:1700,type:'sine',dur:.08,vol:.1});},
+ draw(){noise({dur:.55,vol:.06,f:2600,f2:4200,Q:4});tone({f:660,f2:990,type:'sine',dur:.22,vol:.05});},
+ hit(i=0){const f=[784,988,1175,1319][i%4];tone({f,type:'triangle',dur:.6,vol:.18});tone({f:f*2,type:'sine',dur:.4,vol:.06});},
+ wrong(){tone({f:220,f2:140,type:'sawtooth',dur:.28,vol:.07});tone({f:233,f2:150,type:'square',dur:.28,vol:.03});},
+ win(){[523,659,784,1047].forEach((f,i)=>tone({f,t:i*.08,type:'square',dur:.2,vol:.05}));tone({f:1568,t:.32,type:'triangle',dur:.9,vol:.12});tone({f:2093,t:.32,type:'sine',dur:.9,vol:.05});},
+ page(){noise({dur:.4,vol:.05,f:500,f2:2200,Q:.8});},
+ whoosh(){noise({dur:.55,vol:.14,f:300,f2:3000,Q:2.5});},
+  };})();
+
+/* ================= Drawing engine ================= */
+const NUMF='"DIN Alternate","Bahnschrift","Arial Narrow",Arial,sans-serif';
+const DISPF='"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif';
+const RED='#ff3b52',CYAN='#3ee0ff',AMB='#ffb347',OK='#45e39a',BONE='#ece7dc',GL='rgba(236,231,220,.55)',STEEL='#4b5562';
+const DEG=Math.PI/180;
+const LIQ={water:{n:'Water',rho:1,c:'62,224,255'},alc:{n:'Alcohol',rho:.8,c:'196,168,255'},salt:{n:'Salt water',rho:1.2,c:'69,227,154'}};
+const V={
+ add:(a,b)=>[a[0]+b[0],a[1]+b[1]],sub:(a,b)=>[a[0]-b[0],a[1]-b[1]],mul:(a,k)=>[a[0]*k,a[1]*k],
+ len:a=>Math.hypot(a[0],a[1]),dist:(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]),
+ lerp:(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t],
+ norm:a=>{const l=Math.hypot(a[0],a[1])||1;return [a[0]/l,a[1]/l];},perp:a=>[-a[1],a[0]],
+ t:(p,a,b)=>{const d=[b[0]-a[0],b[1]-a[1]];return ((p[0]-a[0])*d[0]+(p[1]-a[1])*d[1])/(d[0]*d[0]+d[1]*d[1]);},
+ foot:(p,a,b)=>V.lerp(a,b,V.t(p,a,b)),
+};
+const f1=v=>(Math.abs(v)<.05?0:v).toFixed(1);
+const easeIO=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+function mixC(a,b,t){return `rgb(${a.map((v,i)=>Math.round(v+(b[i]-v)*t)).join(',')})`;}
+function el(tag,cls,html,parent){const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;if(parent)parent.appendChild(e);return e;}
+function setH(e,h){if(e&&e.__h!==h){e.innerHTML=h;e.__h=h;}}
+
+class Lab{
+ constructor(cv,W=1600,H=900){this.cv=cv;this.W=W;this.H=H;this.ctx=cv.getContext('2d');this.k=1;this.u=1;this.view={s:1,x:0,y:0};this.setRes(1);}
+ setRes(k){this.k=k;this.cv.width=Math.round(this.W*k);this.cv.height=Math.round(this.H*k);}
+ begin(bg){const c=this.ctx,k=this.k;c.setTransform(k,0,0,k,0,0);
+ if(bg){c.fillStyle='#07090d';c.fillRect(0,0,this.W,this.H);
+ const g=c.createRadialGradient(520,560,40,520,560,720);g.addColorStop(0,'rgba(62,224,255,.05)');g.addColorStop(1,'rgba(62,224,255,0)');c.fillStyle=g;c.fillRect(0,0,this.W,this.H);
+ c.fillStyle='rgba(236,231,220,.07)';for(let x=40;x<=1000;x+=40)for(let y=160;y<=880;y+=40)c.fillRect(x-1,y-1,2,2);}
+ else c.clearRect(0,0,this.W,this.H);
+ const v=this.view;c.setTransform(k*v.s,0,0,k*v.s,k*v.x,k*v.y);}
+  _st(o){const c=this.ctx;c.globalAlpha=o.a??1;c.strokeStyle=o.c||BONE;c.lineWidth=(o.w||3)*this.u;c.lineCap=o.cap||'round';c.lineJoin='round';
+ if(o.dash){c.setLineDash(o.dash.map(x=>x*this.u));if(o.off)c.lineDashOffset=o.off;}if(o.glow){c.shadowColor=o.gc||o.c||BONE;c.shadowBlur=o.glow;}}
+ line(a,b,o={}){const p=o.prog??1;if(p<=.001)return;const c=this.ctx,e=p<1?V.lerp(a,b,p):b;c.save();this._st(o);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(e[0],e[1]);c.stroke();c.restore();}
+ path(pts,o={}){const c=this.ctx;c.save();this._st(o);c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));if(o.close)c.closePath();
+ if(o.fill){c.fillStyle=o.fill;c.fill();}if(o.c||!o.fill)c.stroke();c.restore();}
+ rect(x,y,w,h,o={}){const c=this.ctx;c.save();this._st(o);c.beginPath();if(o.rr&&c.roundRect)c.roundRect(x,y,w,h,o.rr);else c.rect(x,y,w,h);
+ if(o.fill){c.fillStyle=o.fill;c.fill();}c.shadowBlur=o.glow?c.shadowBlur:0;if(o.c)c.stroke();c.restore();}
+ text(p,s,o={}){const c=this.ctx,u=this.u;c.save();c.globalAlpha=o.a??1;let f=o.f||`700 22px ${DISPF}`;if(u!==1)f=f.replace(/(\d+)px/,(m,n)=>Math.round(n*u)+'px');
+ c.font=f;c.textAlign=o.align||'center';c.textBaseline='middle';c.lineJoin='round';c.strokeStyle='rgba(7,9,13,.92)';c.lineWidth=6*u;c.strokeText(s,p[0],p[1]);c.fillStyle=o.c||BONE;c.fillText(s,p[0],p[1]);c.restore();}
+ pt(p,o={}){const c=this.ctx,u=this.u,r=(o.r||9)*u,col=o.c||CYAN;c.save();c.globalAlpha=o.a??1;
+ if(o.ring){c.strokeStyle=col;c.globalAlpha=(o.a??1)*.45;c.lineWidth=2*u;c.beginPath();c.arc(p[0],p[1],r+9*u+Math.sin(performance.now()/180)*2.5*u,0,7);c.stroke();c.globalAlpha=o.a??1;}
+ c.shadowColor=col;c.shadowBlur=o.glow??14;c.fillStyle=o.hollow?'#07090d':col;c.beginPath();c.arc(p[0],p[1],r,0,7);c.fill();c.shadowBlur=0;c.lineWidth=2.5*u;c.strokeStyle=o.hollow?col:'#fff';c.stroke();c.restore();
+ if(o.label)this.text([p[0]+(o.lx??16)*u,p[1]+(o.ly??-18)*u],o.label,{c:o.lc||col,f:o.f||`800 26px ${DISPF}`,align:o.align||'left',a:o.a});}
+ arrow(p,d,o={}){const L=V.len(d);if(L<2)return;const c=this.ctx,u=this.u,n=V.mul(d,1/L),hs=Math.min((o.hs||18)*u,L*.7),e=V.add(p,d),b=V.sub(e,V.mul(n,hs*.8)),q=V.perp(n),col=o.c||RED;
+ c.save();c.globalAlpha=o.a??1;c.strokeStyle=col;c.fillStyle=col;c.lineWidth=(o.w||5)*u;c.lineCap='round';if(o.glow!==0){c.shadowColor=col;c.shadowBlur=o.glow??12;}
+ if(o.dash)c.setLineDash(o.dash.map(x=>x*u));c.beginPath();c.moveTo(p[0],p[1]);c.lineTo(b[0],b[1]);c.stroke();c.setLineDash([]);
+ const hb=V.sub(e,V.mul(n,hs)),h1=V.add(hb,V.mul(q,hs*.5)),h2=V.sub(hb,V.mul(q,hs*.5));c.beginPath();c.moveTo(e[0],e[1]);c.lineTo(h1[0],h1[1]);c.lineTo(h2[0],h2[1]);c.closePath();c.fill();c.restore();
+ if(o.label){const lp=o.lp||V.add(e,V.mul(n,(o.lo??22)*u));this.text(lp,o.label,{c:o.lc||col,f:o.f||`800 24px ${DISPF}`,align:o.align||'center',a:o.a});}}
+ dim(a,b,s,o={}){const d=V.norm(V.sub(b,a)),n=V.perp(d),off=o.off??0,u=this.u,a2=V.add(a,V.mul(n,off)),b2=V.add(b,V.mul(n,off)),t=V.mul(n,8*u),col=o.c||OK,c=this.ctx;
+ c.save();c.globalAlpha=o.a??1;c.strokeStyle=col;c.lineWidth=(o.w||2.5)*u;if(o.glow){c.shadowColor=col;c.shadowBlur=o.glow;}c.beginPath();c.moveTo(a2[0],a2[1]);c.lineTo(b2[0],b2[1]);
+    [a2,b2].forEach(p=>{c.moveTo(p[0]-t[0],p[1]-t[1]);c.lineTo(p[0]+t[0],p[1]+t[1]);});c.stroke();c.restore();
+ if(s){const m=V.lerp(a2,b2,.5),lo=(o.lo??22)*u*(off<0?-1:1);this.text(V.add(m,V.mul(n,lo)),s,{c:col,f:o.f||`800 22px ${DISPF}`,a:o.a,align:o.align});}}
+ right(p,d1,d2,o={}){const sz=(o.s||15)*this.u,a=V.add(p,V.mul(V.norm(d1),sz)),b=V.add(p,V.mul(V.norm(d2),sz)),m=V.add(a,V.mul(V.norm(d2),sz)),c=this.ctx;c.save();
+ c.globalAlpha=o.a??1;c.strokeStyle=o.c||OK;c.lineWidth=2.2*this.u;c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(m[0],m[1]);c.lineTo(b[0],b[1]);c.stroke();c.restore();}
+ tank(x0,x1,sy,yb,liq,o={}){const L=LIQ[liq||'water'],col=`rgba(${L.c},`;this.rect(x0,sy,x1-x0,yb-sy,{fill:col+'.15)'});
+ const g=this.ctx.createLinearGradient(0,sy,0,yb);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(10,30,70,.3)');this.rect(x0,sy,x1-x0,yb-sy,{fill:g});
+ this.line([x0,sy],[x1,sy],{c:col+'.9)',w:2,glow:10});this.path([[x0-5,o.top??sy-70],[x0-5,yb+5],[x1+5,yb+5],[x1+5,o.top??sy-70]],{c:'rgba(236,231,220,.5)',w:4});}
+}
+
+/* Line chart (small plot in the panel) */
+function plot(cv,o){const c=cv.getContext('2d'),W=472,H=110;c.setTransform(2,0,0,2,0,0);c.clearRect(0,0,W,H);
+ const L=34,Rr=10,Tp=8,B=20,[x0,x1]=o.xr,[y0,y1]=o.yr,X=x=>L+(x-x0)/(x1-x0)*(W-L-Rr),Y=y=>H-B-(clamp(y,y0,y1)-y0)/(y1-y0)*(H-B-Tp);
+ c.lineWidth=1;c.strokeStyle='rgba(236,231,220,.1)';(o.yt||[]).forEach(v=>{c.beginPath();c.moveTo(L,Y(v));c.lineTo(W-Rr,Y(v));c.stroke();});
+ c.font=`600 10px ${NUMF}`;c.fillStyle='rgba(236,231,220,.5)';c.textAlign='right';c.textBaseline='middle';(o.yt||[]).forEach(v=>c.fillText(v,L-5,Y(v)));
+ c.textAlign='center';c.textBaseline='top';(o.xt||[]).forEach(v=>c.fillText(v+(o.xu||''),X(v),H-B+5));
+ if(o.mark!=null){const mx=X(o.mark);c.strokeStyle='rgba(69,227,154,.6)';c.setLineDash([3,3]);c.beginPath();c.moveTo(mx,Tp);c.lineTo(mx,H-B);c.stroke();c.setLineDash([]);}
+ (o.fns||[]).forEach(f=>{c.strokeStyle=f.c;c.lineWidth=2;c.globalAlpha=f.a??1;c.beginPath();for(let i=0;i<=200;i++){const x=x0+(x1-x0)*i/200,v=f.f(x);i?c.lineTo(X(x),Y(v)):c.moveTo(X(x),Y(v));}c.stroke();c.globalAlpha=1;});
+ if(o.x!=null){const xc=clamp(o.x,x0,x1),xx=X(xc);c.strokeStyle='rgba(255,59,82,.55)';c.setLineDash([3,3]);c.beginPath();c.moveTo(xx,Tp);c.lineTo(xx,H-B);c.stroke();c.setLineDash([]);
+ (o.fns||[]).forEach(f=>{const v=f.f(xc);c.fillStyle=f.c;c.shadowColor=f.c;c.shadowBlur=8;c.beginPath();c.arc(xx,Y(v),4.5,0,7);c.fill();c.shadowBlur=0;});}}
+
+/* Density bar */
+function rhoBar(cv,rho,rl){const c=cv.getContext('2d'),W=472,H=110;c.setTransform(2,0,0,2,0,0);c.clearRect(0,0,W,H);
+ const L=18,Rr=18,X=v=>L+(v-.2)/1.8*(W-L-Rr),y=60;
+ c.fillStyle='rgba(62,224,255,.22)';c.fillRect(X(.2),y-11,X(rl)-X(.2),22);c.fillStyle='rgba(255,59,82,.2)';c.fillRect(X(rl),y-11,X(2)-X(rl),22);
+ c.font=`700 12px ${DISPF}`;c.textAlign='center';c.textBaseline='middle';c.fillStyle=CYAN;if(X(rl)-X(.2)>90)c.fillText('Rises → Floats',(X(.2)+X(rl))/2,y);c.fillStyle=RED;if(X(2)-X(rl)>90)c.fillText('Sinks → Rests on bottom',(X(2)+X(rl))/2,y);
+ c.fillStyle=OK;c.fillRect(X(rl)-1.5,y-17,3,34);c.font=`700 11px ${DISPF}`;c.fillText(`Suspended   ρ_liq = ${rl.toFixed(1)}`,X(rl),y-26);
+ c.fillStyle='rgba(236,231,220,.5)';c.font=`600 10px ${NUMF}`;c.textBaseline='top';for(let v=.2;v<=2.001;v+=.2)c.fillText(v.toFixed(1),X(v),y+18);
+ const mx=X(rho),col=Math.abs(rho-rl)<.005?OK:rho<rl?CYAN:RED;c.fillStyle=col;c.shadowColor=col;c.shadowBlur=10;c.beginPath();c.moveTo(mx,y+12);c.lineTo(mx-7,y+24);c.lineTo(mx+7,y+24);c.closePath();c.fill();
+ c.fillRect(mx-1.5,y-12,3,24);c.shadowBlur=0;c.font=`800 13px ${NUMF}`;c.textBaseline='middle';c.fillText('ρ_obj '+rho.toFixed(2),clamp(mx,40,W-40),12);}
+
+/* ================= 01 Buoyancy Lab: Weighing Method + Archimedes ================= */
+function mkBuoy(o={}){
+ const PX=16,CX=430,BW=80,BH=128,G=12,A=100,SA=50,H=8,CUP={x0:350,x1:510,yt:592,yb:840},CC={x0:584,x1:664,yt:680,yb:840},SPY=624,LS=(840-624)/16;
+ const S={name:'Weighing Method · Archimedes',liq:o.liq||'water',full:o.full!==false,by:600,W:0,out:0,cl:0,flow:0,hot:null,held:false,bbox:[90,190,720,870]};
+ S.reset=()=>{S.W=S.full?A*LS:A*(LS-1.6);S.out=0;S.cl=0;S.flow=0;S.by=o.by??600;};S.reset();
+ const bcm=()=>(CUP.yb-S.by)/PX;
+ S.level=()=>{const b=bcm(),W=S.W;let l=W/A;if(l>b){l=(W-SA*b)/(A-SA);if(l>b+H)l=(W+SA*H)/A;}return l;};
+ S.sub=()=>clamp(S.level()-bcm(),0,H);
+ S.depth=()=>Math.max(0,S.level()-bcm());
+ S.rho=()=>LIQ[S.liq].rho;
+ S.Fb=()=>S.rho()*SA*S.sub()/100;
+ S.F=()=>G-S.Fb();
+ S.Gp=()=>S.rho()*S.cl/100;
+ S.handles=[{id:'blk',r:80,get:()=>[CX,S.by-BH/2],set:p=>{S.by=clamp(p[1]+BH/2,600,808);}}];
+ S.tick=dt=>{const b=bcm(),d=clamp(LS-b,0,H),Wn=A*LS-SA*d;if(S.W>Wn+1e-9){S.out+=S.W-Wn;S.W=Wn;}
+ S.cl+=(S.out-S.cl)*(1-Math.exp(-dt/240));if(S.out-S.cl>1.2)S.flow=1;else S.flow=Math.max(0,S.flow-dt/250);if(S.out-S.cl<.05)S.cl=S.out;};
+ S.draw=(g,now)=>{const L=LIQ[S.liq],col=`rgba(${L.c},`,lv=S.level(),ly=CUP.yb-lv*PX,top=S.by-BH,hook=top-30,sB=hook-12,sTop=sB-160,cy=sTop-24,F=S.F(),Fb=S.Fb(),hot=S.hot==='blk'||S.held;
+    // Ring stand
+ g.rect(100,846,220,14,{fill:'#1b222c',c:'rgba(236,231,220,.22)',w:1.5});
+ g.line([190,846],[190,196],{c:STEEL,w:10,cap:'butt'});
+ g.line([190,cy],[CX+8,cy],{c:'#6b7684',w:7});g.rect(176,cy-14,28,28,{fill:'#2b333e',c:'rgba(236,231,220,.4)',w:1.5,rr:3});
+    // Spring scale
+ g.line([CX,cy],[CX,sTop],{c:GL,w:2});
+ g.rect(CX-27,sTop,54,160,{fill:'#121820',c:'rgba(236,231,220,.55)',w:2,rr:7});
+ const ty=n=>sTop+14+n*10.6,py=ty(clamp(F,0,12.5));
+ for(let n=0;n<=12;n++)g.line([CX-22,ty(n)],[CX-(n%2?15:9),ty(n)],{c:'rgba(236,231,220,.55)',w:1.3,cap:'butt'});
+ for(let n=0;n<=12;n+=2)g.text([CX+16,ty(n)],String(n),{f:`600 11px ${NUMF}`,c:'rgba(236,231,220,.7)'});
+ const zz=[];for(let k=0;k<=12;k++)zz.push([CX-2+(k>0&&k<12?(k%2?5:-5):0),sTop+6+(py-sTop-6)*k/12]);g.path(zz,{c:'rgba(236,231,220,.75)',w:1.5});
+ g.line([CX-2,py],[CX-2,sB],{c:'rgba(236,231,220,.7)',w:2});
+ g.line([CX-24,py],[CX+4,py],{c:RED,w:3,glow:10});
+ g.line([CX-2,sB],[CX,top],{c:GL,w:2});
+    // Water in the overflow cup
+ g.rect(CUP.x0,ly,CUP.x1-CUP.x0,CUP.yb-ly,{fill:col+'.2)'});
+    // block
+ const grd=g.ctx.createLinearGradient(CX-BW/2,0,CX+BW/2,0);grd.addColorStop(0,'#7a4c22');grd.addColorStop(.45,'#d89a52');grd.addColorStop(1,'#6f4520');
+ g.rect(CX-BW/2,top,BW,BH,{fill:grd,c:hot?RED:'rgba(255,220,170,.6)',w:hot?3:1.5,rr:3,glow:hot?14:0});
+ const sy=Math.max(ly,top);if(S.by>sy)g.rect(CX-BW/2,sy,BW,S.by-sy,{fill:col+'.22)'});
+ g.line([CUP.x0,ly],[CUP.x1,ly],{c:col+'.9)',w:2,glow:10});
+    // Cup wall + spout
+ const W8='rgba(236,231,220,.55)';
+ g.path([[CUP.x0-5,CUP.yt],[CUP.x0-5,CUP.yb+5],[CUP.x1+5,CUP.yb+5],[CUP.x1+5,SPY+7]],{c:W8,w:4});g.line([CUP.x1+5,SPY-7],[CUP.x1+5,CUP.yt],{c:W8,w:4});
+ g.line([CUP.x1+5,SPY-7],[CUP.x1+86,SPY+24],{c:W8,w:3});g.line([CUP.x1+5,SPY+7],[CUP.x1+80,SPY+36],{c:W8,w:3});
+    // Bucket
+ const ch=S.cl/50*PX;if(ch>.5)g.rect(CC.x0,CC.yb-ch,CC.x1-CC.x0,ch,{fill:col+'.35)'});if(ch>.5)g.line([CC.x0,CC.yb-ch],[CC.x1,CC.yb-ch],{c:col+'.9)',w:2,glow:8});
+ g.path([[CC.x0-4,CC.yt],[CC.x0-4,CC.yb+4],[CC.x1+4,CC.yb+4],[CC.x1+4,CC.yt]],{c:W8,w:4});
+ if(S.flow>.02){const c=g.ctx,a=[CUP.x1+84,SPY+32],e=[624,CC.yb-ch];c.save();c.globalAlpha=S.flow;c.strokeStyle=col+'.9)';c.lineWidth=5*g.u;c.setLineDash([12*g.u,7*g.u]);c.lineDashOffset=-now/12;
+ c.shadowColor=col+'1)';c.shadowBlur=10;c.beginPath();c.moveTo(a[0],a[1]);c.quadraticCurveTo(622,a[1]+4,e[0],e[1]);c.stroke();c.restore();}
+ g.text([CUP.x0-14,CUP.yb-24],'Overflow cup',{align:'right',f:`700 18px ${DISPF}`,c:'rgba(236,231,220,.6)'});
+ g.text([CC.x1+12,CC.yb-24],'Bucket',{align:'left',f:`700 18px ${DISPF}`,c:'rgba(236,231,220,.6)'});
+ if(S.cl>2)g.text([(CC.x0+CC.x1)/2,CC.yb-ch-20],'G_disp '+f1(S.Gp())+'N',{f:`800 18px ${NUMF}`,c:OK});
+    // Immersion depth
+ const dd=S.depth();if(dd>.05){const x=CX-BW/2-14;g.line([x,ly],[x,S.by],{c:AMB,w:2});g.line([x-6,S.by],[x+6,S.by],{c:AMB,w:2});
+ g.text([CUP.x0-14,(ly+S.by)/2],'h = '+f1(dd)+' cm',{align:'right',f:`800 19px ${NUMF}`,c:AMB});}
+    // Forces
+ const ctr=[CX,S.by-BH/2];
+ g.arrow(ctr,[0,G*9],{c:AMB,label:'G',lo:20});
+ g.line([CX-52,top],[CX-40,top],{c:'rgba(236,231,220,.5)',w:2});g.arrow([CX-52,top],[0,-F*9],{c:BONE,label:'F_pull',lo:18,w:4});
+ if(Fb>.05)g.arrow([CX+22,ctr[1]],[0,-Fb*9],{c:CYAN,label:'F_buoy',lo:18,w:4});
+ g.text([CX+44,py],f1(F)+' N',{align:'left',f:`800 22px ${NUMF}`,c:RED});};
+ return S;}
+
+/* ================= 02 Pressure Difference ================= */
+function mkPress(o={}){
+ const PX=16,X0=150,X1=880,SY=330,YB=840,CX=520,SZ=160;
+ const S={name:'Pressure Difference',top:o.top??430,stuck:!!o.stuck,hot:null,bbox:[90,250,900,870]};
+ S.h1=()=>Math.max(0,(S.top-SY)/PX);S.h2=()=>(S.top+SZ-SY)/PX;S.x=()=>(S.top-SY)/PX;
+ S.F1=()=>S.h1();S.F2=()=>S.stuck?0:Math.max(0,S.h2());S.Fb=()=>S.F2()-S.F1();
+ S.handles=[{id:'blk',r:90,get:()=>[CX,S.top+SZ/2],set:p=>{if(S.stuck)return;S.top=clamp(p[1]-SZ/2,250,540);}}];
+ S.setStuck=v=>{S.stuck=v;S.top=v?YB-SZ:430;};
+ S.tick=()=>{};
+ S.draw=(g,now)=>{const top=S.top,bot=top+SZ,x0=CX-SZ/2,x1=CX+SZ/2,hot=S.hot==='blk'||S.held,K=4;
+ g.tank(X0,X1,SY,YB,'water');
+ if(S.stuck){g.rect(X0,YB-4,X1-X0,9,{fill:'#5a4630'});for(let x=X0+6;x<X1;x+=18)g.line([x,YB+6],[x+10,YB-3],{c:'rgba(160,120,80,.5)',w:1.5});}
+ const grd=g.ctx.createLinearGradient(x0,0,x1,0);grd.addColorStop(0,'#3e4a59');grd.addColorStop(.5,'#7d8ca0');grd.addColorStop(1,'#36404d');
+ g.rect(x0,top,SZ,SZ,{fill:grd,c:hot?RED:'rgba(236,231,220,.55)',w:hot?3:1.5,rr:3,glow:hot?14:0});
+ const sy=Math.max(SY,top);if(bot>sy)g.rect(x0,sy,SZ,bot-sy,{fill:'rgba(62,224,255,.16)'});
+ const h1=S.h1(),h2=S.h2();
+ if(h1>.3)for(let k=0;k<5;k++)g.arrow([x0+16+k*32,top-K*h1-3],[0,K*h1],{c:AMB,w:3,hs:11,glow:6});
+ if(!S.stuck)for(let k=0;k<5;k++)g.arrow([x0+16+k*32,bot+K*h2+3],[0,-K*h2],{c:CYAN,w:3,hs:11,glow:6});
+ for(const yy of [top+22,top+SZ/2,bot-22]){const d=(yy-SY)/PX;if(d<=.3)continue;const l=K*d;g.arrow([x0-l-4,yy],[l,0],{c:'rgba(236,231,220,.5)',w:2.5,hs:10,glow:0});g.arrow([x1+l+4,yy],[-l,0],{c:'rgba(236,231,220,.5)',w:2.5,hs:10,glow:0});}
+ g.text([x1+20,top-Math.max(14,K*h1/2)],'F_up = '+f1(S.F1())+' N',{align:'left',f:`800 24px ${DISPF}`,c:AMB});
+ g.text([x1+20,S.stuck?bot-24:bot+Math.max(14,K*h2/2)],S.stuck?'F_down = 0 (no water underneath)':'F_down = '+f1(S.F2())+' N',{align:'left',f:`800 24px ${DISPF}`,c:CYAN});
+ if(top>SY+2)g.dim([250,SY],[250,top],'h₁',{c:AMB,lo:20});g.dim([205,SY],[205,bot],'h₂',{c:CYAN,lo:20});
+ if(top>SY+70)g.text([CX,(SY+top)/2+4],'Left and right pressures cancel out',{f:`600 16px ${DISPF}`,c:'rgba(236,231,220,.45)'});};
+ return S;}
+
+/* ================= 03 Float-or-Sink Conditions ================= */
+function mkSink(o={}){
+ const PX=12,X0=150,X1=880,SY=330,YB=840,CX=515,SZ=120;
+ const S={name:'Float-or-Sink Conditions',rho:o.rho??.6,liq:o.liq||'water',yc:o.yc??560,v:0,held:false,hot:null,bbox:[100,240,900,870]};
+ S.rl=()=>LIQ[S.liq].rho;
+ S.frac=()=>clamp((S.yc+SZ/2-SY)/SZ,0,1);
+ S.G=()=>S.rho*10;S.Fb=()=>S.rl()*10*S.frac();
+ S.onBottom=()=>S.yc>=YB-SZ/2-.5;
+ S.N=()=>S.onBottom()?Math.max(0,S.G()-S.Fb()):0;
+ S.handles=[{id:'obj',r:85,get:()=>[CX,S.yc],set:p=>{S.yc=clamp(p[1],250,YB-SZ/2);S.v=0;}}];
+ S.settle=()=>{if(S.rho<S.rl())S.yc=SY+SZ*S.rho/S.rl()-SZ/2;else if(S.rho>S.rl())S.yc=YB-SZ/2;S.v=0;};
+ S.tick=dt=>{if(S.held)return;const n=4,t=Math.min(dt,50)/1000/n;for(let k=0;k<n;k++){const f=S.frac(),m=S.rho+.5*S.rl()*f+.05,a=(S.G()-S.Fb())/m*70-(1.2+1.2*f+6*f*(1-f))*S.v;
+ S.v+=a*t;S.yc+=S.v*t;if(S.yc>=YB-SZ/2){S.yc=YB-SZ/2;if(S.v>0)S.v=0;}}};
+ S.state=()=>{const f=S.frac(),G=S.G(),Fb=S.Fb(),eq=Math.abs(S.rho-S.rl())<.005;
+ if(f<=0)return {t:'In air',c:BONE,cond:'Only gravity acts, so it falls'};
+ if(S.onBottom()&&S.rho>S.rl()+.005)return {t:'Rests on bottom',c:RED,cond:'F_buoy + N = G'};
+ if(eq&&f>=1)return {t:'Suspended  ',c:OK,cond:'F_buoy = G,  ρ_obj = ρ_liq'};
+ if(f<1&&Math.abs(S.v)<8&&Math.abs(G-Fb)<.25)return {t:'Floating',c:CYAN,cond:'F_buoy = G,  ρ_obj < ρ_liq'};
+ if(Fb>G)return {t:'Rising',c:CYAN,cond:'F_buoy > G'};
+ return {t:'Sinking',c:AMB,cond:'F_buoy < G'};};
+ S.draw=(g,now)=>{const top=S.yc-SZ/2,bot=S.yc+SZ/2,x0=CX-SZ/2,L=LIQ[S.liq],col=`rgba(${L.c},`,hot=S.hot==='obj'||S.held,st=S.state();
+ g.tank(X0,X1,SY,YB,S.liq);
+ const t=clamp((S.rho-.2)/1.8,0,1);
+ g.rect(x0,top,SZ,SZ,{fill:mixC([236,192,120],[74,84,98],t),c:hot?RED:'rgba(255,255,255,.55)',w:hot?3:1.5,rr:4,glow:hot?14:0});
+ const sy=Math.max(SY,top);if(bot>sy)g.rect(x0,sy,SZ,bot-sy,{fill:col+'.22)'});
+ g.text([CX,S.yc-30],S.rho.toFixed(2),{f:`800 28px ${NUMF}`,c:'#fff'});
+ const K=7,G=S.G(),Fb=S.Fb(),N=S.N();
+ g.arrow([CX,S.yc],[0,G*K],{c:AMB,label:'G',lo:18,w:4});
+ if(Fb>.05)g.arrow([CX+34,S.yc],[0,-Fb*K],{c:CYAN,label:'F_buoy',lo:18,w:4});
+ if(N>.05)g.arrow([CX-34,bot],[0,-N*K],{c:BONE,label:'N',lo:16,w:4});
+ if(st.t==='Floating'){const x=x0+SZ+18;g.dim([x,SY],[x,top],'V_out',{c:BONE,lo:30});g.dim([x,bot],[x,SY],'V_disp',{c:CYAN,lo:30});}
+ g.text([X0+16,SY-34],st.t,{align:'left',f:`900 40px ${DISPF}`,c:st.c});
+ g.text([X1-12,SY-34],st.cond,{align:'right',f:`700 22px ${DISPF}`,c:'rgba(236,231,220,.75)'});};
+ return S;}
+
+/* ================= 04 Lever Balance ================= */
+function mkLever(o={}){
+ const O=[500,440],SP=80,BL=430;
+ const S={name:'Lever Balance',L:{n:o.ln??2,i:o.li??3},R:{n:o.rn??3,i:o.ri??4},th:0,lockL:!!o.lockL,trials:[],newT:0,hot:null,bbox:[50,230,950,860]};
+ S.tq=()=>S.R.n*S.R.i-S.L.n*S.L.i;S.bal=()=>S.tq()===0;
+ const rot=x=>[O[0]+x*Math.cos(S.th),O[1]+x*Math.sin(S.th)];
+ S.hole=(side,i)=>rot(side*i*SP);
+ const stk=side=>{const st=side<0?S.L:S.R,h=S.hole(side,st.i);return [h[0],h[1]+34+st.n*13];};
+ S.handles=[{id:'R',r:55,get:()=>stk(1),set:p=>{const i=clamp(Math.round((p[0]-O[0])/SP),1,5);if(i!==S.R.i){S.R.i=i;SFX.blip();}}}];
+ if(!S.lockL)S.handles.push({id:'L',r:55,get:()=>stk(-1),set:p=>{const i=clamp(Math.round((O[0]-p[0])/SP),1,5);if(i!==S.L.i){S.L.i=i;SFX.blip();}}});
+ S.tick=dt=>{const tq=S.tq(),tg=tq>0?.2:tq<0?-.2:0;S.th+=(tg-S.th)*(1-Math.exp(-dt/200));
+ if(S.bal()&&Math.abs(S.th)<.004){const r=[S.L.n*.5,S.L.i*5,S.R.n*.5,S.R.i*5];if(!S.trials.some(x=>x.join()===r.join())){S.trials.push(r);if(S.trials.length>4)S.trials.shift();S.newT=1;}}};
+ S.state=()=>{const tq=S.tq();return tq===0?{t:'Balanced level ✓',c:OK}:tq>0?{t:'Right side down',c:RED}:{t:'Left side down',c:RED};};
+ S.draw=(g,now)=>{const up=[Math.sin(S.th),-Math.cos(S.th)];
+ g.rect(O[0]-100,836,200,14,{fill:'#1b222c',c:'rgba(236,231,220,.22)',w:1.5});
+ g.line([O[0],O[1]+8],[O[0],836],{c:STEEL,w:14,cap:'butt'});
+ g.line(rot(-BL),rot(BL),{c:'#d6cfbf',w:16,cap:'butt'});g.line(rot(-BL),rot(BL),{c:'rgba(0,0,0,.22)',w:3,cap:'butt'});
+ g.line(rot(-BL-18),rot(-BL+2),{c:AMB,w:12,cap:'butt'});g.line(rot(BL-2),rot(BL+18),{c:AMB,w:12,cap:'butt'});
+ for(const sd of [-1,1])for(let i=1;i<=5;i++){const p=S.hole(sd,i);g.pt(p,{r:4,c:'#151a21',glow:0});g.text(V.add(p,V.mul(up,20)),String(i),{f:`700 14px ${NUMF}`,c:'rgba(236,231,220,.6)'});}
+ g.pt(O,{r:10,c:'#9aa3ae',glow:0});
+ for(const sd of [-1,1]){const st=sd<0?S.L:S.R,h=S.hole(sd,st.i),hot=S.hot===(sd<0?'L':'R')||(S.held&&S.hot===(sd<0?'L':'R'));
+ g.line(h,[h[0],h[1]+34],{c:GL,w:2});
+ for(let k=0;k<st.n;k++){const y=h[1]+34+k*26;const gr=g.ctx.createLinearGradient(h[0]-17,0,h[0]+17,0);gr.addColorStop(0,'#8a5a22');gr.addColorStop(.45,'#e6aa58');gr.addColorStop(1,'#7a4c1c');
+ g.rect(h[0]-17,y,34,23,{fill:gr,c:hot?RED:'rgba(255,230,180,.55)',w:hot?2.5:1.2,rr:3,glow:hot?10:0});}
+ g.text([h[0],h[1]+34+st.n*26+18],(sd<0?'F₁ = ':'F₂ = ')+f1(st.n*.5)+' N',{f:`800 19px ${DISPF}`,c:sd<0?OK:AMB});}
+ const hl=S.hole(-1,S.L.i),hr=S.hole(1,S.R.i);
+ g.dim(O,hl,'L₁ = '+S.L.i*5+' cm',{c:OK,off:46,lo:20});g.dim(O,hr,'L₂ = '+S.R.i*5+' cm',{c:AMB,off:-46,lo:20});
+ const st=S.state();g.text([O[0],250],st.t,{f:`900 40px ${DISPF}`,c:st.c});};
+ return S;}
+
+/* ================= 05 Lever Arm and Minimum Force ================= */
+function mkArm(o={}){
+ const O=[280,560],A=[130,560],G=200,PXC=6,BX1=880;
+ const S={name:'Lever Arm · Minimum Force',bx:o.bx??620,psi:o.psi??(55*DEG),rv:0,rvT:0,snap:null,snapped:false,held:false,hot:null,bbox:[90,300,1000,860],
+ steps:['Draw along the direction of F: the  <b>line of action</b> (dashed line)','From pivot O, draw a  <b>perpendicular</b>; the perpendicular segment is the effort arm L₁','L₁ Longest = OB gives the smallest force:  <b>farthest point + perpendicular</b>']};
+ S.B=()=>[S.bx,560];S.dir=()=>[Math.cos(S.psi),Math.sin(S.psi)];
+ S.L1=()=>(S.bx-O[0])*Math.sin(S.psi);S.F=()=>G*(O[0]-A[0])/S.L1();S.fpsi=ps=>G*(O[0]-A[0])/((S.bx-O[0])*Math.sin(ps*DEG));
+ S.Lf=()=>clamp(40+S.F(),60,220);
+ S.handles=[{id:'dir',r:40,get:()=>V.add(S.B(),V.mul(S.dir(),S.Lf())),set:p=>{const d=V.sub(p,S.B());let a=Math.atan2(d[1],d[0]);if(a<0)a=a<-Math.PI/2?145*DEG:35*DEG;S.psi=clamp(a,35*DEG,145*DEG);}},
+    {id:'B',r:34,get:S.B,set:p=>{S.bx=clamp(p[0],400,BX1);}}];
+ S.tick=(dt,now)=>{if(S.rv<S.rvT)S.rv=Math.min(S.rvT,S.rv+dt/(window.RVMS||700));
+ if(S.rv>=3-1e-6&&!S.snapped&&!S.held){S.snapped=true;S.snap={t0:now,p0:S.psi,b0:S.bx};SFX.hit(2);}
+ if(S.snap){const k=easeIO(clamp((now-S.snap.t0)/(window.SNAPMS||900),0,1));S.psi=lerp(S.snap.p0,90*DEG,k);S.bx=lerp(S.snap.b0,BX1,k);if(k>=1)S.snap=null;}};
+ S.draw=(g,now)=>{const B=S.B(),d=S.dir(),rv=S.rv,F=S.F(),Lf=S.Lf();
+ g.line([60,840],[980,840],{c:'rgba(236,231,220,.22)',w:2});
+ g.rect(O[0]-14,600,28,240,{fill:'#2b333e',c:'rgba(236,231,220,.25)',w:1.5});
+ g.path([[O[0],567],[O[0]-30,604],[O[0]+30,604]],{close:true,fill:'#566170',c:'rgba(236,231,220,.6)',w:2});
+ g.line([110,560],[900,560],{c:'#d6cfbf',w:14,cap:'butt'});
+    // Heavy load
+ g.line(A,[A[0],620],{c:GL,w:2});const gr=g.ctx.createLinearGradient(A[0]-36,0,A[0]+36,0);gr.addColorStop(0,'#3e4a59');gr.addColorStop(.5,'#7d8ca0');gr.addColorStop(1,'#36404d');
+ g.rect(A[0]-36,620,72,62,{fill:gr,c:'rgba(236,231,220,.5)',w:1.5,rr:4});g.text([A[0],651],'200N',{f:`800 18px ${NUMF}`,c:'#fff'});
+ g.arrow([A[0],651],[0,110],{c:AMB,label:'G',lo:18,w:4});
+ g.dim(O,A,'L₂ = 25 cm',{c:AMB,off:34,lo:20});
+ g.text([O[0],626],'O',{f:`800 24px ${DISPF}`,c:BONE});g.text([A[0]-18,540],'A',{f:`800 22px ${DISPF}`,c:BONE});
+    // Line of action / lever arm
+ if(rv>0)g.line(V.sub(B,V.mul(d,640)),V.add(B,V.mul(d,420)),{c:'rgba(255,59,82,.7)',w:2,dash:[10,8],prog:Math.min(1,rv)});
+ if(rv>1){const H=V.foot(O,B,V.add(B,d)),p=Math.min(1,rv-1);g.line(O,H,{c:OK,w:4,glow:10,prog:p});
+ if(p>=1){g.right(H,V.sub(O,H),V.sub(B,H),{c:OK});g.text(V.add(V.lerp(O,H,.5),V.mul(V.norm(V.perp(V.sub(H,O))),-28)),'L₁ = '+f1(S.L1()/PXC)+' cm',{f:`800 22px ${DISPF}`,c:OK});}}
+ if(rv>2){const a=Math.min(1,rv-2),E=[BX1,560];g.arrow(E,[0,92],{c:OK,dash:[8,6],a,label:'Minimum Force',lp:[E[0]+22,E[1]+56],align:'left',w:4});g.dim(O,E,'OB Longest = 100 cm',{c:OK,off:40,lo:20,a});}
+ g.arrow(B,V.mul(d,Lf),{c:RED,w:6,label:'F = '+F.toFixed(0)+' N',lo:30});
+ g.pt(V.add(B,V.mul(d,Lf)),{c:RED,r:8,hollow:true,ring:S.hot==='dir'});
+ g.pt(B,{c:RED,r:9,ring:S.hot==='B',label:'B',lx:-8,ly:-30});};
+ return S;}
+
+/* ================= 06 Three Types of Levers ================= */
+function mkKind(o={}){
+ const Y=560,X0=110,X1=890,LP=140,EP=860,G=200,PXC=7.2;
+ const S={name:'Three Types of Levers',xf:o.xf??330,ang:0,anim:null,hot:null,bbox:[60,250,960,860]};
+ S.L1=()=>EP-S.xf;S.L2=()=>S.xf-LP;S.F=()=>G*S.L2()/S.L1();
+ S.kind=()=>Math.abs(S.L1()-S.L2())<1?'eq':S.L1()>S.L2()?'save':'cost';
+ S.amax=()=>Math.min(Math.asin(Math.min(1,46/S.L2())),Math.asin(Math.min(1,130/S.L1())),20*DEG);
+ S.handles=[{id:'f',r:50,get:()=>[S.xf,Y+80],set:p=>{let x=clamp(p[0],200,800);if(Math.abs(x-500)<14)x=500;S.xf=x;S.anim=null;S.ang=0;}}];
+ S.press=now=>{S.anim={t0:now};};
+ S.tick=(dt,now)=>{if(S.anim){const t=(now-S.anim.t0)/2600;if(t>=1){S.anim=null;S.ang=0;}else S.ang=Math.sin(Math.PI*Math.min(1,t*1.25))*S.amax();}};
+ S.draw=(g,now)=>{const xf=S.xf,a=S.ang,r=x=>[xf+(x-xf)*Math.cos(a),Y+(x-xf)*Math.sin(a)],k=S.kind(),c=g.ctx,u=g.u;
+ g.line([60,Y+150],[960,Y+150],{c:'rgba(236,231,220,.22)',w:2});
+ g.path([[xf,Y+9],[xf-34,Y+150],[xf+34,Y+150]],{close:true,fill:'#3a4350',c:S.hot==='f'?RED:'rgba(236,231,220,.6)',w:S.hot==='f'?3:2});
+ g.line(r(X0),r(X1),{c:'#d6cfbf',w:16,cap:'butt'});
+ const lp=r(LP);c.save();c.translate(lp[0],lp[1]);c.rotate(a);const gr=c.createLinearGradient(-44,0,44,0);gr.addColorStop(0,'#3e4a59');gr.addColorStop(.5,'#7d8ca0');gr.addColorStop(1,'#36404d');
+ c.fillStyle=gr;c.strokeStyle='rgba(236,231,220,.5)';c.lineWidth=1.5*u;c.beginPath();c.moveTo(-44,-9);c.lineTo(-36,-80);c.lineTo(30,-86);c.lineTo(44,-9);c.closePath();c.fill();c.stroke();c.restore();
+ const gc=V.add(lp,[0,-46]);g.text(gc,'Stone 200 N',{f:`800 16px ${DISPF}`,c:'#fff'});
+ const ep=r(EP),Lf=clamp(24+S.F()*.45,30,230);g.arrow([ep[0],ep[1]-9-Lf],[0,Lf],{c:RED,w:6,label:'F = '+S.F().toFixed(0)+' N',lp:[ep[0],ep[1]-9-Lf-22]});
+ g.text([ep[0]+36,ep[1]+2],'Hand',{f:`800 20px ${DISPF}`,c:RED,align:'left'});
+ g.dim(r(LP),[xf,Y],'L₂ = '+f1(S.L2()/PXC)+' cm',{c:AMB,off:36,lo:20});g.dim([xf,Y],r(EP),'L₁ = '+f1(S.L1()/PXC)+' cm',{c:OK,off:36,lo:20});
+ if(S.anim&&a>.002){const s2=S.L2()*Math.sin(a),s1=S.L1()*Math.sin(a);
+ g.arrow([LP-64,Y],[0,-Math.max(s2,3)],{c:AMB,w:3,hs:10,glow:0});g.text([LP-64,Y+26],'Rises '+f1(s2/PXC)+' cm',{f:`800 18px ${DISPF}`,c:AMB});
+ g.arrow([EP+56,Y],[0,Math.max(s1,3)],{c:RED,w:3,hs:10,glow:0});g.text([EP+20,Y+s1+22],'Pushed down '+f1(s1/PXC)+' cm',{f:`800 18px ${DISPF}`,c:RED,align:'center'});}
+ const KN={save:['Force-saving lever',OK,'L₁ > L₂'],cost:['Effort-costing lever',RED,'L₁ < L₂'],eq:['Equal-arm lever',AMB,'L₁ = L₂']}[k];
+ g.text([500,265],KN[0],{f:`900 44px ${DISPF}`,c:KN[1]});g.text([500,312],KN[2],{f:`800 24px ${DISPF}`,c:'rgba(236,231,220,.75)'});};
+ return S;}
+</script>
+
+<script>
+/* ================= Applications ================= */
+const cv=$('cv');const LB=new Lab(cv);
+document.addEventListener('pointerdown',()=>SFX.unlock(),{once:true});
+document.addEventListener('click',e=>{if(e.target.closest('button'))SFX.click();},true);
+function sndUI(){const b=$('sndBtn');b.textContent=SFX.muted?'Sound OFF':'Sound ON';b.style.color=SFX.muted?'':'var(--sig)';}
+$('sndBtn').onclick=()=>{SFX.setMuted(!SFX.muted);sndUI();};sndUI();
+function toggleFS(){if(!document.fullscreenElement)document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();else document.exitFullscreen();}
+
+/* ---------- Panel ---------- */
+const PN={};
+const LQB=sel=>Object.entries(LIQ).map(([k,v])=>`<button class="mb${k===sel?' on':''}" data-l="${k}">${v.n} ${v.rho.toFixed(1)}</button>`).join('');
+const GR='<canvas class="gr" width="944" height="220"></canvas>';
+function panel(i,mk,html,upd,init){const sd=$('sd'+i);sd.innerHTML=html;const P={mk,S:mk(),sd,q:s=>sd.querySelector(s)};PN[i]=P;P.upd=()=>upd(P);if(init)init(P);return P;}
+function liqBind(P,after){P.q('.lq').querySelectorAll('button').forEach(b=>b.onclick=()=>{P.S.liq=b.dataset.l;after&&after();P.q('.lq').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));SFX.blip();});}
+
+panel(1,()=>mkBuoy(),`
+  <div class="k">Spring scale reading</div>
+  <div class="rdv"><span class="lb">F_read</span> = <b class="v1"></b><small> N</small></div>
+  <div class="tb"><span>Object weight G (weighed in air)</span><b class="a">12.0 N</b><span>Buoyant force F_buoy = G − F_read</span><b class="c v2"></b><span>Weight of water in the bucket G_disp</span><b class="g v3"></b><span>Volume of liquid displaced V_disp</span><b class="v4"></b></div>
+  <div class="nt"></div>
+  <div class="rowx lq"><span class="xl">Liquid</span>${LQB('water')}</div>
+  <div class="rowx"><button class="mb b-full">Overflow cup not full (common mistake)</button><button class="mb b-rst">Empty and retry</button></div>
+  <div><div class="gcap"><span>Changes with immersion depth h</span><span><i class="lgw">━ F_read</i> <i class="lgc">━ F_buoy</i></span></div>${GR}</div>
+  <div class="kj">Weighing <b>F_buoy = G − F_read</b><br>Archimedes <b>F_buoy = G_disp = ρ_liq g V_disp</b></div>`,
+ P=>{const S=P.S,q=P.q,sb=S.sub();setH(q('.v1'),f1(S.F()));setH(q('.v2'),f1(S.Fb())+' N');setH(q('.v3'),f1(S.Gp())+' N');setH(q('.v4'),Math.round(sb*50)+' cm³');
+ let nt;if(sb<=0)nt='The block is still in the air: F_read = G = 12.0 N';
+ else if(!S.full)nt=S.out<1?'<span class="r">Not full: the water first rises to the spout, so the bucket is still empty</span>':'<span class="r">Not full → less water flows into the bucket → G_disp &lt; F_buoy</span>';
+ else if(sb<8-1e-6)nt='Deeper → larger V_disp → greater buoyant force';else nt='<span class="g">Fully submerged: going deeper, V_disp and buoyant force stay the same</span>';
+ setH(q('.nt'),nt);const rho=S.rho();
+ plot(q('.gr'),{xr:[0,11],yr:[0,13],xt:[0,2,4,6,8,10],xu:'',yt:[0,4,8,12],x:S.depth(),fns:[{f:h=>12-rho*50*Math.min(h,8)/100,c:BONE},{f:h=>rho*50*Math.min(h,8)/100,c:CYAN}]});},
+ P=>{liqBind(P,()=>P.S.reset());const q=P.q;
+ q('.b-full').onclick=()=>{P.S.full=!P.S.full;P.S.reset();q('.b-full').classList.toggle('on',!P.S.full);SFX.blip();};
+ q('.b-rst').onclick=()=>{P.S.reset();SFX.whoosh();};});
+
+panel(2,()=>mkPress(),`
+  <div class="k">Buoyant force = bottom-face pressure force − top-face pressure force</div>
+  <div class="rdv"><span class="lb">F_buoy</span> = <b class="v1"></b><small> N</small></div>
+  <div class="tb"><span>Top-face depth h₁</span><b class="a v2"></b><span>Top-face force F_up = ρgh₁·S</span><b class="a v3"></b><span>Bottom-face depth h₂</span><b class="c v4"></b><span>Bottom-face force F_down = ρgh₂·S</span><b class="c v5"></b></div>
+  <div class="nt"></div>
+  <div class="rowx"><button class="mb b-stk">Pressed against the pool floor (bridge pier)</button><span class="xl" style="margin-left:6px">Stone side 10 cm, S = 100 cm²</span></div>
+  <div><div class="gcap"><span>Changes with top-face depth h₁  </span><span><i class="lga">━ F_up</i> <i class="lgc">━ F_down</i> <i class="lgg">━ F_buoy</i></span></div>${GR}</div>
+  <div class="kj">What buoyancy really is:  <b>F_buoy = F_down − F_up</b><br>Once submerged, buoyant force  <b>does not depend on depth</b></div>`,
+ P=>{const S=P.S,q=P.q;setH(q('.v1'),f1(S.Fb()));setH(q('.v2'),f1(S.h1())+' cm');setH(q('.v3'),f1(S.F1())+' N');setH(q('.v4'),f1(Math.max(0,S.h2()))+' cm');setH(q('.v5'),f1(S.F2())+' N');
+ setH(q('.nt'),S.stuck?'<span class="r">Bottom face is flat on the floor, so no water pushes up → F_buoy = 0 (a bridge pier feels no buoyancy)</span>':S.h1()<=0?'Top face above the water: F_up = 0, F_buoy = F_down':'<span class="g">Going deeper once submerged: F_up and F_down both grow, but the difference stays 10 N</span>');
+ plot(q('.gr'),{xr:[-5,13],yr:[0,24],xt:[-4,0,4,8,12],yt:[0,10,20],x:S.x(),fns:[{f:x=>Math.max(0,x),c:AMB},{f:x=>S.stuck?0:x+10,c:CYAN},{f:x=>S.stuck?0:Math.min(10,x+10),c:OK}]});},
+ P=>{const b=P.q('.b-stk');b.onclick=()=>{P.S.setStuck(!P.S.stuck);b.classList.toggle('on',P.S.stuck);SFX.drop();};});
+
+function sinkCtrl(box,getS){box.innerHTML='<span class="xl">ρ_obj</span><input type="range" class="rng" min="0.2" max="2" step="0.01"><b class="rv"></b>';const r=box.querySelector('input'),v=box.querySelector('.rv');
+ const sync=()=>{const S=getS();r.value=S.rho;v.textContent=S.rho.toFixed(2);};r.oninput=()=>{getS().rho=+r.value;v.textContent=(+r.value).toFixed(2);SFX.tick();};sync();return sync;}
+panel(3,()=>mkSink(),`
+  <div class="k">Object density (volume 1000 cm³, unit g/cm³)</div>
+  <div class="rowx rho"></div>
+  <div class="rowx lq"><span class="xl">Liquid</span>${LQB('water')}</div>
+  <div class="rdv st"><span class="v1"></span></div>
+  <div class="nt v2"></div>
+  <div class="tb"><span>Weight G = ρ_obj g V</span><b class="a v3"></b><span>Buoyant force F_buoy = ρ_liq g V_disp</span><b class="c v4"></b></div>
+  <div><div class="gcap"><span>Density decides float or sink</span><span></span></div>${GR}</div>
+  <div class="rowx"><button class="mb b-dn">Push to the bottom, then let go</button><button class="mb b-up">Lift into the air, then let go</button></div>
+  <div class="kj"><b>ρ_obj &lt; ρ_liq</b> Rises → Floats<br><b>ρ_obj = ρ_liq</b> Suspended  <b>ρ_obj &gt; ρ_liq</b> Sinks → Rests on bottom</div>`,
+ P=>{const S=P.S,q=P.q,st=S.state();setH(q('.v1'),`<span style="color:${st.c}">${st.t}</span>`);
+ setH(q('.v2'),st.cond+(st.t==='Floating'?` <span class="c">Exposed ${Math.round((1-S.rho/S.rl())*100)}%</span>`:''));
+ setH(q('.v3'),f1(S.G())+' N');setH(q('.v4'),f1(S.Fb())+' N');rhoBar(q('.gr'),S.rho,S.rl());},
+ P=>{P.sync=sinkCtrl(P.q('.rho'),()=>P.S);liqBind(P);P.q('.b-dn').onclick=()=>{P.S.yc=780;P.S.v=0;SFX.drop();};P.q('.b-up').onclick=()=>{P.S.yc=255;P.S.v=0;SFX.whoosh();};});
+
+panel(4,()=>mkLever(),`
+  <div class="k">Lever status</div>
+  <div class="rdv st"><span class="v1"></span></div>
+  <table class="lt"><tr><th></th><th>F / N</th><th>L / cm</th><th>F × L</th></tr><tr class="l1"><td>Left · Effort</td><td></td><td></td><td></td></tr><tr class="l2"><td>Right · Load</td><td></td><td></td><td></td></tr></table>
+  <div class="rowx"><span class="xl">Left weights</span><button class="mb b-lm">−</button><button class="mb b-lp">＋</button><span class="xl" style="margin-left:16px">Right weights</span><button class="mb b-rm">−</button><button class="mb b-rp">＋</button></div>
+  <div class="k">Lab log · a set is recorded automatically at balance</div>
+  <table class="lt tr"><thead><tr><th>Trial</th><th>F₁/N</th><th>L₁/cm</th><th>F₂/N</th><th>L₂/cm</th></tr></thead><tbody class="trb"></tbody></table>
+  <div class="nt"></div>
+  <div class="kj">Lever balance condition:  <b>F₁L₁ = F₂L₂</b><br>Effort × effort arm = Load × load arm</div>`,
+ P=>{const S=P.S,q=P.q,st=S.state();setH(q('.v1'),`<span style="color:${st.c}">${st.t}</span>`);
+ const row=(tr,s)=>{const td=tr.children;setH(td[1],f1(s.n*.5));setH(td[2],String(s.i*5));setH(td[3],f1(s.n*.5*s.i*5));};row(q('.l1'),S.L);row(q('.l2'),S.R);
+ setH(q('.trb'),S.trials.map((r,i)=>`<tr><td>${i+1}</td><td>${f1(r[0])}</td><td>${r[1]}</td><td>${f1(r[2])}</td><td>${r[3]}</td></tr>`).join(''));
+ const n=S.trials.length;setH(q('.nt'),n>=3?'<span class="g">Every set satisfies F₁L₁ = F₂L₂ → Many trials make the conclusion general</span>':`Change the marks or the number of weights, then find ${3-n} more balanced sets`);
+ if(S.newT){S.newT=0;SFX.hit(n);}},
+ P=>{const q=P.q,ch=(side,dn)=>{const s=P.S[side];s.n=clamp(s.n+dn,1,6);SFX.blip();};
+ q('.b-lm').onclick=()=>ch('L',-1);q('.b-lp').onclick=()=>ch('L',1);q('.b-rm').onclick=()=>ch('R',-1);q('.b-rp').onclick=()=>ch('R',1);});
+
+panel(5,()=>mkArm(),`
+  <div class="k">Effort needed</div>
+  <div class="rdv"><span class="lb">F</span> = <b class="v1"></b><small> N</small></div>
+  <div class="tb"><span>Load G · load arm L₂</span><b class="a">200 N · 25 cm</b><span>Force point to pivot OB</span><b class="v2"></b><span>Effort arm L₁(distance from O to the line of action)</span><b class="g v3"></b></div>
+  <div><div class="gcap"><span>F Changes with force direction (angle to the bar)</span><span class="v4"></span></div>${GR}</div>
+  <ol class="steps"></ol>
+  <div class="rowx"><button class="mb go b-next">Next Step ▶</button><button class="mb b-all">Reveal All</button><button class="mb b-rst">Retry</button></div>
+  <div class="kj">The lever arm is the distance from <b>pivot to the line of action</b> of the force<br>Minimum force:  <b>find the farthest point, join it to the pivot, draw the perpendicular</b></div>`,
+ P=>{const S=P.S,q=P.q;setH(q('.v1'),S.F().toFixed(0));setH(q('.v2'),f1((S.bx-280)/6)+' cm');setH(q('.v3'),f1(S.L1()/6)+' cm');setH(q('.v4'),Math.round(S.psi/DEG)+'°');
+ const li=q('.steps').children;for(let k=0;k<li.length;k++){const c=S.rv>=k+1-1e-6?'done':(k===S.rvT?'next':'');if(li[k].className!==c)li[k].className=c;}q('.b-next').disabled=S.rvT>=3;
+ plot(q('.gr'),{xr:[35,145],yr:[0,450],xt:[45,90,135],xu:'°',yt:[0,200,400],x:S.psi/DEG,mark:S.rv>=3?90:null,fns:[{f:S.fpsi,c:RED}]});},
+ P=>{const q=P.q,build=()=>{q('.steps').innerHTML=P.S.steps.map(t=>`<li>${t}</li>`).join('');};build();
+ q('.b-next').onclick=()=>{const S=P.S;if(S.rvT<3){S.rvT++;SFX.draw();}};q('.b-all').onclick=()=>{const S=P.S;if(S.rvT<3){S.rvT=3;SFX.draw();}};
+ q('.b-rst').onclick=()=>{P.S=P.mk();build();SFX.whoosh();};});
+
+panel(6,()=>mkKind(),`
+  <div class="k">This lever is a</div>
+  <div class="rdv st"><span class="v1"></span></div>
+  <div class="tb"><span>Effort arm L₁</span><b class="g v2"></b><span>Load arm L₂</span><b class="a v3"></b><span>Effort F (stone G = 200 N)</span><b class="r v4"></b><span>Hand distance : stone rise</span><b class="v5"></b></div>
+  <div class="rowx"><button class="mb go b-prs">Press ▶</button><button class="mb b-eq">Pivot in the middle</button></div>
+  <div class="ex"><div class="c1"><h5>Force-saving lever</h5>Crowbar · Claw hammer<br>Pliers · Bottle opener</div><div class="c2"><h5>Effort-costing lever</h5>Tweezers · Chopsticks<br>Fishing rod · Oar</div><div class="c3"><h5>Equal-arm lever</h5>Balance scale<br>Seesaw</div></div>
+  <div class="kj">If it saves force, it <b>costs distance</b>; if it costs force, it <b>saves distance</b><br>No lever saves both force and distance</div>`,
+ P=>{const S=P.S,q=P.q,k=S.kind(),KN={save:['Force-saving lever','var(--ok)'],cost:['Effort-costing lever','var(--sig)'],eq:['Equal-arm lever','var(--amb)']}[k];
+ setH(q('.v1'),`<span style="color:${KN[1]}">${KN[0]}</span>`);setH(q('.v2'),f1(S.L1()/7.2)+' cm');setH(q('.v3'),f1(S.L2()/7.2)+' cm');setH(q('.v4'),S.F().toFixed(0)+' N');
+ setH(q('.v5'),(S.L1()/S.L2()).toFixed(1)+' : 1');['save','cost','eq'].forEach((x,i)=>{const e=q('.c'+(i+1));if(e.classList.contains('on')!==(x===k))e.classList.toggle('on',x===k);});},
+ P=>{P.q('.b-prs').onclick=()=>{P.S.press(performance.now());SFX.whoosh();};P.q('.b-eq').onclick=()=>{P.S.xf=500;SFX.blip();};});
+
+/* ---------- Challenge ---------- */
+const LV=[
+  {mk:()=>mkBuoy(),q:'Slowly lower the block into <b>Water</b> so the spring scale reads exactly <b>10.0 N</b>',read:S=>`F_read = <b>${f1(S.F())}</b><small> N</small>`,ok:S=>Math.abs(S.F()-10)<.1,
+ ans:'F_buoy = 12 − 10 = 2 N → V_disp = 200 cm³ → immersed 4 cm (half the block)',hint:'First find the buoyant force F_buoy = G − F_read, then use V_disp = F_buoy ÷   ρ_w g'},
+  {mk:()=>mkSink({rho:.4}),ctrl:true,q:'Set the density so that, in water, the object is <b>Floating</b>, with <b>1/4 exposed</b> of its volume',read:S=>`ρ_obj = <b>${S.rho.toFixed(2)}</b><small> g/cm³</small>`,ok:S=>Math.abs(S.rho-.75)<.011,
+ ans:'Floating, F_buoy = G:  ρ_w g · ¾V = ρ_obj g V → ρ_obj = 0.75 g/cm³',hint:'When floating, V_disp / V = ρ_obj / ρ_liq'},
+  {mk:()=>mkLever({ln:3,li:4,rn:4,ri:1,lockL:true}),q:'On the left, 3 weights hang at mark 4. For the right side, <b>4 weights</b> — at which mark do they balance it?',read:S=>`Right: mark <b>${S.R.i}</b> (counted from the pivot)`,ok:S=>S.bal(),
+ ans:'3 × 4 = 4 × 3 → Mark 3 (F₁L₁ = F₂L₂)',hint:'Number of weights × mark number must be equal on both sides'},
+  {mk:()=>mkArm({bx:560,psi:50*DEG}),q:'On the bar, use the  <b>smallest force</b> to lift the load: drag the force point B and the force direction',read:S=>`F = <b>${S.F().toFixed(0)}</b><small> N</small>`,ok:S=>S.F()<=50.6,
+ ans:'Put the force point at the far end and push perpendicular to the bar: F = 200 × 25 ÷ 100 = 50 N',hint:'A longer effort arm saves more force: pick the point farthest from the pivot and push perpendicular to the line joining it to the pivot'},
+  {mk:()=>mkKind({xf:640}),q:'Use <b>50 N</b> of force to lift <b>200 N</b> stone. Where should the pivot go?',read:S=>`F = <b>${S.F().toFixed(0)}</b><small> N</small>`,ok:S=>Math.abs(S.F()-50)<=2.5,
+ ans:'F₁ : F₂ = 1 : 4 → L₁ : L₂ = 4 : 1 → Pivot 20 cm from the stone (forces 100 cm apart)',hint:'Effort is 1/4 of the load, so the effort arm must be 4 times the load arm'},
+];
+const QZ={li:0,S:null,done:LV.map(()=>0),wrong:0,ok:false};
+LV.forEach((_,i)=>{const b=el('button','lv',i+1,$('lvls'));b.onclick=()=>qLoad(i);});$('qt').textContent=LV.length;
+function lvUI(){[...$('lvls').children].forEach((b,i)=>b.className='lv'+(i===QZ.li?' on':'')+(QZ.done[i]?' ok':''));$('qn').textContent=QZ.done.reduce((a,b)=>a+b,0);}
+function qLoad(i){QZ.li=i;QZ.wrong=0;QZ.ok=false;const L=LV[i];QZ.S=L.mk();$('verdict').classList.remove('on');$('qk').textContent=`LEVEL 0${i+1} · ${QZ.S.name}`;$('qq').innerHTML=L.q;
+  $('qx').innerHTML='';if(L.ctrl)sinkCtrl($('qx'),()=>QZ.S);$('fb').className='fb';$('fb').innerHTML='When it looks right, tap “Lock In”';lvUI();}
+$('lock').onclick=()=>{const S=QZ.S,L=LV[QZ.li];if(!S||QZ.ok)return;
+ if(L.ok(S)){QZ.ok=true;QZ.done[QZ.li]=1;SFX.win();$('fb').className='fb ok';$('fb').innerHTML=`Correct!<small>${L.ans}</small>`;
+ const all=QZ.done.every(x=>x);$('vds').textContent=all?'All levels cleared!':(QZ.wrong?'Passed!':'First try!');$('verdict').querySelector('.w').textContent=QZ.wrong?'CLEAR':'PERFECT';$('verdict').classList.add('on');setTimeout(()=>$('verdict').classList.remove('on'),1800);lvUI();}
+ else{QZ.wrong++;SFX.wrong();const fb=$('fb');fb.className='fb no';fb.innerHTML='Almost there, calculate again'+(QZ.wrong>=2?`<small>Hint:  ${L.hint}</small>`:'');fb.classList.remove('shake');void fb.offsetWidth;fb.classList.add('shake');}};
+$('qhint').onclick=()=>{$('fb').className='fb';$('fb').innerHTML=`Hint:  ${LV[QZ.li].hint}`;};
+$('qre').onclick=()=>qLoad(QZ.li);$('qnext').onclick=()=>qLoad((QZ.li+1)%LV.length);
+function qUpdate(){setH($('qrd'),LV[QZ.li].read(QZ.S));}
+
+/* ---------- Summary ---------- */
+const TL=[
+  {mk:()=>{const S=mkBuoy({by:760});for(let k=0;k<40;k++)S.tick(100);return S;},n:'01 · Weighing Method + Archimedes',h:'F_buoy = <i>G_disp</i>',fm:'F_buoy = G − F_read = ρ_liq gV_disp',d:'Buoyant force depends only on liquid density and V_disp; fill the overflow cup first.'},
+  {mk:()=>mkPress({top:430}),n:'02 · Pressure Difference',h:'Pressure <i>Difference</i>',fm:'F_buoy = F_down − F_up',d:'Deeper once submerged, both pressures grow but the difference stays the same; a bridge pier feels no buoyancy.'},
+  {mk:()=>{const S=mkSink({rho:.6});S.settle();return S;},n:'03 · Float-or-Sink Conditions',h:'Float or Sink <i>Compare Density</i>',fm:'ρ_obj &lt; ρ_liq rises,  &gt; Sinking',d:'Floating and suspended both mean F_buoy = G; when floating, V_disp / V = ρ_obj / ρ_liq.'},
+  {mk:()=>mkLever({ln:3,li:2,rn:2,ri:3}),n:'04 · Lever Balance',h:'Levers <i>Balance</i>',fm:'F₁L₁ = F₂L₂',d:'Level the lever with the balance nuts first and read arms directly from the bar; do several sets to find the pattern.'},
+  {mk:()=>{const S=mkArm({bx:880,psi:90*DEG});S.rv=S.rvT=3;S.snapped=true;return S;},n:'05 · Lever Arm · Minimum Force',h:'Lever Arm<i>: longest</i> → smallest force',fm:'Lever arm = distance from pivot to line of action',d:'Minimum force: join the farthest point to the pivot and push perpendicular to that line.'},
+  {mk:()=>mkKind({xf:300}),n:'06 · Three Types of Levers',h:'Saves force <i>costs distance</i>',fm:'L₁ &gt; L₂ Saves force · L₁ &lt; L₂ Costs force',d:'Crowbars and claw hammers save force; tweezers and chopsticks cost force; a balance has equal arms.'},
+];
+TL.forEach((t,i)=>{const d=el('div','tile',`<div class="n">${t.n}</div><canvas id="tc${i}"></canvas><div><div class="h">${t.h}</div><div class="fm">${t.fm}</div><div class="d">${t.d}</div></div>`,$('tiles'));
+ d.style.transitionDelay=(.05+i*.08)+'s';d.onclick=()=>go(i+1);});
+function thumbs(){TL.forEach((t,i)=>{const c=$('tc'+i),G=new Lab(c,250,190);G.setRes(2);const S=t.mk();const [x0,y0,x1,y1]=S.bbox,s=Math.min(250/(x1-x0),190/(y1-y0));
+ G.view={s,x:(250-(x1-x0)*s)/2-x0*s,y:(190-(y1-y0)*s)/2-y0*s};G.u=.42/s;G.begin(false);S.draw(G,0);});}
+
+/* ---------- Cover ---------- */
+const TS=mkBuoy();
+(function(){['Weighing','Pressure Difference','Float-or-Sink Conditions','Lever Balance','Lever Arm · Min Force','Three Types of Levers'].forEach((n,i)=>{const b=el('button',null,`<b>0${i+1}</b>${n}`,$('chips'));b.onclick=()=>go(i+1);});})();
+
+/* ---------- Drag ---------- */
+function curScene(){return PN[cur]?PN[cur].S:(cur===7?QZ.S:null);}
+const VW={s:.95,x:25,y:0};
+function wpos(e){const r=cv.getBoundingClientRect();return [((e.clientX-r.left)/r.width*1600-VW.x)/VW.s,((e.clientY-r.top)/r.height*900-VW.y)/VW.s];}
+function hitTest(S,p){let best=null,bd=1e9;(S.handles||[]).forEach(h=>{const d=V.dist(h.get(),p);if(d<(h.r||36)&&d<bd){bd=d;best=h;}});return best;}
+let drag=null;
+cv.addEventListener('pointerdown',e=>{const S=curScene();if(!S)return;const h=hitTest(S,wpos(e));if(!h)return;drag=h;S.held=true;S.hot=h.id;S.snap=null;cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing';SFX.pick();e.preventDefault();});
+cv.addEventListener('pointermove',e=>{const S=curScene();if(!S)return;const p=wpos(e);if(drag){drag.set(p);SFX.tick();}else{const h=hitTest(S,p);S.hot=h?h.id:null;cv.style.cursor=h?'grab':'default';}});
+cv.addEventListener('pointerup',()=>{if(drag){const S=curScene();if(S){S.held=false;S.v=0;}drag=null;cv.style.cursor='grab';SFX.drop();}});
+
+/* ---------- Page turning ---------- */
+const slides=[...document.querySelectorAll('.slide')];let cur=-1;
+const NOTES=[
+ 'Two big lab topics in Grade 8 physics: buoyancy and levers. Every page is a draggable lab where numbers, forces and graphs update live. Keyboard: ← → turn pages, F fullscreen, M mute.',
+ 'Weighing method + Archimedes’ principle: first weigh the object in air, G = 12 N, then lower the block slowly into the liquid. The scale reading drops, and F_buoy = G − F_read. When the overflow cup is full, the weight of water flowing into the bucket, G_disp, equals the buoyant force. Tap “Overflow cup not full” to show the common mistake: G_disp comes out too small. Switch to alcohol or salt water: for the same V_disp, a denser liquid gives more buoyancy. Graph: buoyancy grows with depth before submersion and stays constant after.',
+ 'Why buoyancy exists: liquid pressure grows with depth, so the bottom face feels more force than the top face, while left and right forces cancel. The stone has side 10 cm, S = 100 cm², and F = ρghS computed this way, F_up and F_down equal the depth in cm, which makes mental math easy. Going deeper once submerged, both forces grow but the difference stays 10 N. Finally tap “Pressed against the pool floor”: a bridge pier or an object stuck in mud has no water under it and feels no buoyancy.',
+ 'Float-or-sink conditions: drag the block under water or up into the air, then let go, and watch it rise, float, suspend, sink or rest on the bottom. Set the object density on the right and compare it with the liquid density to decide. When floating, V_disp / V = ρ_obj / ρ_liq; let students predict the exposed fraction first, then check.',
+ 'Exploring the lever balance condition: each weight is 0.5 N and each mark is 5 cm. Drag weights left and right and add or remove weights; the lever tips toward the side with the larger F × L. A data set is recorded automatically at balance; collect three sets, then summarize F₁L₁ = F₂L₂; stress that repeating trials is how we find a general rule. Before the experiment, level the lever with the balance nuts so arms can be read directly from the bar.',
+ 'Lever arm and minimum force: the lever arm is the distance from the pivot to the line of action, not to the point where the force is applied. Drag B to move the force point and drag the arrow tip to change direction, and watch the curve of F. “Next Step” draws the line of action, then the perpendicular to get the arm, and finally the minimum-force method: join the farthest point to the pivot and push perpendicular to that line.',
+ 'Lever types: drag the pivot. L₁ > L₂ → saves force; L₁ < L₂ → costs force; equal arms make an equal-arm lever. Tap “Press” to see how far the hand and the stone each move: a force-saving lever costs distance, and an effort-costing lever saves distance. Let students sort the tools on the right one by one.',
+ 'Challenge, 5 levels: 2 on buoyancy and 3 on levers; always calculate first, then act. When it looks right, tap “Lock In”; two wrong tries bring a hint.',
+ 'Review of the six key ideas: tap any card to return to its lab.',
+];
+function go(i){i=clamp(i,0,slides.length-1);if(i===cur)return;if(cur>=0)SFX.page();drag=null;
+ slides.forEach((s,k)=>s.classList.toggle('on',k===i));cur=i;
+  $('pbar').style.width=((i+1)/slides.length*100)+'%';$('pg').innerHTML=`<b>${String(i+1).padStart(2,'0')}</b> / ${String(slides.length).padStart(2,'0')}`;
+  $('notesTxt').textContent=NOTES[i];try{history.replaceState(null,'','#'+(i+1));}catch(e){}
+ if(i===7&&!QZ.S)qLoad(0);if(PN[3]&&i===3)PN[3].sync();cv.style.opacity=i===0?.62:(i===8?.25:1);cv.style.cursor='default';}
+function fit(){const s=Math.min(innerWidth/1600,innerHeight/900);$('stage').style.transform=`scale(${s})`;const k=clamp(s*(window.devicePixelRatio||1),1,2);if(Math.abs(k-LB.k)>.05)LB.setRes(k);}
+addEventListener('resize',fit);
+document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'&&e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return;if(e.target.tagName==='INPUT')return;
+ if(e.key==='ArrowRight'||e.key==='PageDown')go(cur+1);else if(e.key==='ArrowLeft'||e.key==='PageUp')go(cur-1);
+ else if(e.key==='f'||e.key==='F')toggleFS();else if(e.key==='m'||e.key==='M'){SFX.setMuted(!SFX.muted);sndUI();}
+ else if(e.key===' '&&cur===5){e.preventDefault();PN[5].q('.b-next').click();}});
+let lastNow=performance.now();
+function frame(){const now=performance.now(),dt=clamp(now-lastNow,0,50);lastNow=now;
+ if(cur===0){TS.by=704+100*Math.sin(now/1400);TS.tick(dt,now);LB.view={s:.86,x:900,y:20};LB.begin(true);TS.draw(LB,now);}
+ else{LB.view=VW;LB.begin(true);const S=curScene();if(S){S.tick(dt,now);S.draw(LB,now);if(PN[cur])PN[cur].upd();else if(cur===7)qUpdate();}}
+ requestAnimationFrame(frame);}
+fit();thumbs();
+go(clamp((parseInt(location.hash.slice(1))||1)-1,0,slides.length-1));
+requestAnimationFrame(frame);
+</script>
+<!-- LivePage badge: web only, hidden inside the LivePage app -->
+<script id="lp-get-app">(function(){var w=window.webkit;if(w&&w.messageHandlers&&w.messageHandlers.lp)return;function add(){if(document.getElementById("lp-badge"))return;var a=document.createElement("a");a.id="lp-badge";a.href="https://apps.apple.com/app/id6837615778";a.target="_blank";a.rel="noopener";a.textContent="Made with LivePage · Get the app";a.style.cssText="position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:2147483647;font:600 11px/1 -apple-system,system-ui,sans-serif;letter-spacing:.04em;color:#f3efe6;background:rgba(12,14,20,.78);border:1px solid rgba(255,255,255,.16);padding:7px 11px;border-radius:99px;text-decoration:none;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)";document.body.appendChild(a);}if(document.body)add();else addEventListener("DOMContentLoaded",add);})();</script>
+</body>
+</html>
